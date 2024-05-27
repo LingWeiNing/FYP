@@ -13,35 +13,6 @@ width, height = 800, 600
 screen = pygame.display.set_mode((width, height))
 pygame.display.set_caption("Level Selection")
 
-# Button class definition
-class Button:
-    def __init__(self, x, y, image_path, width, height, text, action):
-        self.rect = pygame.Rect(x, y, width, height)
-        self.image_orig = pygame.image.load(image_path).convert_alpha()
-        self.image = pygame.transform.scale(self.image_orig, (width, height))
-        self.text = text
-        self.action = action
-
-    def draw(self, screen):
-        screen.blit(self.image, self.rect)
-        font = pygame.font.SysFont(None, 30)
-        text_surface = font.render(self.text, True, (255, 255, 255))
-        text_rect = text_surface.get_rect(center=(self.rect.centerx, self.rect.bottom + 20))
-        screen.blit(text_surface, text_rect)
-
-    def handle_event(self, event):
-        if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
-            if self.rect.collidepoint(event.pos):
-                return self.action
-        return None
-
-# Create buttons
-buttons = [
-    Button(50, 25, "assets\Bg\Background.png", 300, 250, "Level 1", "start_level_one"),  # Call the face detection scene when this button is pressed
-    Button(450, 23, "assets\Bg\gym.jpg", 300, 250, "Level 2", "start_level_two"),  # Add more buttons for other levels
-    Button(50, 320, "assets\Bg\maze.png", 300, 250, "Level 3", "start_level_three"),
-    Button(450, 320, "assets\Bg\museum.jpg", 300, 250, "Level 4", "start_level_four")
-]
 
 def render_dialogue_text(text, font, maxwidth):
     words = text.split(" ")
@@ -148,10 +119,6 @@ def lvlSelection():
     while True:
         screen.fill((0, 0, 0))
 
-        if not button_clicked:  # Only draw buttons if no button has been clicked
-            for button in buttons:
-                button.draw(screen)
-
         if selected_level == "start_level_one":
             render_dialogue(screen, dialogue_backgrounds[dialogue_progress], dialogue_texts, dialogue_backgrounds, dialogue_progress, maxwidth, x, y)
 
@@ -170,13 +137,6 @@ def lvlSelection():
                 sys.exit()
 
             if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
-                if not button_clicked:  # Only handle button clicks if no button has been clicked
-                    for button in buttons:
-                        action = button.handle_event(event)
-                        if action:
-                            button_clicked = True  # Set the flag to True when a button is clicked
-                            selected_level = action  # Update selected_level regardless of its current value
-
                 if selected_level == "start_level_one":
                     # Progress dialogue when the mouse is clicked
                     if dialogue_progress < len(dialogue_texts) - 1:
@@ -208,4 +168,4 @@ def lvlSelection():
         pygame.display.flip()
 
 # Run the main menu
-lvlSelection()
+#lvlSelection()

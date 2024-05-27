@@ -2,7 +2,7 @@ import pygame
 import sys
 from pygame.locals import *
 from LevelSelection import lvlSelection
-
+from Level_One import level_one_scene
 
 # Initialize Pygame
 pygame.init()
@@ -12,59 +12,183 @@ width, height = 800, 600
 screen = pygame.display.set_mode((width, height))
 pygame.display.set_caption("Main Menu")
 
+def render_dialogue_text(text, font, maxwidth):
+    words = text.split(" ")
+    lines = []
+    current_line = ""
+    for word in words:
+        if font.size(current_line + " " + word)[0] <= maxwidth:
+            current_line += " " + word if current_line != "" else word
+        else:
+            lines.append(current_line)
+            current_line = word
+    if current_line:
+        lines.append(current_line)
+    return lines
+
+def render_dialogue(screen, background, dialogue_texts, dialogue_backgrounds, dialogue_progress, maxwidth, x, y):
+    if dialogue_progress >= 0 and dialogue_progress < len(dialogue_texts):
+        screen.blit(dialogue_backgrounds[dialogue_progress], (0, 0))  # Draw background image for dialogue
+        font = pygame.font.SysFont(None, 30)
+        lines = render_dialogue_text(dialogue_texts[dialogue_progress][0], font, maxwidth)
+        for line in lines:
+            text_surface = font.render(line, True, (0, 0, 0))
+            text_rect = text_surface.get_rect(center=(x, y))
+            screen.blit(text_surface, text_rect)
+            y += font.get_linesize()
+            
+
 # Button class definition
 class Button:
-    def __init__(self, x, y, image_path, width, height, action):
+    def __init__(self, x, y, image_paths, click_image_paths, width, height, action, frame_rate=30):
         self.rect = pygame.Rect(x, y, width, height)
-        self.image_orig = pygame.image.load(image_path).convert_alpha()
-        self.image = pygame.transform.scale(self.image_orig, (width, height))
+        self.images = [pygame.transform.scale(pygame.image.load(image).convert_alpha(), (width, height)) for image in image_paths]
+        self.click_images = [pygame.transform.scale(pygame.image.load(image).convert_alpha(), (width, height)) for image in click_image_paths]
         self.action = action
+        self.current_frame = 0
+        self.frame_rate = frame_rate
+        self.frame_count = 0
+        self.clicked = False
+        self.click_animation_done = False
 
     def draw(self, screen):
-        screen.blit(self.image, self.rect)
+        if self.clicked:
+            if not self.click_animation_done:
+                screen.blit(self.click_images[self.current_frame], self.rect)
+                self.frame_count += 1
+                if self.frame_count >= self.frame_rate:
+                    self.frame_count = 0
+                    self.current_frame += 1
+                    if self.current_frame >= len(self.click_images):
+                        self.click_animation_done = True
+        else:
+            screen.blit(self.images[self.current_frame], self.rect)
+            self.frame_count += 1
+            if self.frame_count >= self.frame_rate:
+                self.frame_count = 0
+                self.current_frame = (self.current_frame + 1) % len(self.images)
 
     def handle_event(self, event):
         if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
             if self.rect.collidepoint(event.pos):
+                self.clicked = True
+                self.current_frame = 0
+                self.frame_count = 0
+                self.click_animation_done = False
                 return self.action
         return None
 
+    def is_click_animation_done(self):
+        return self.click_animation_done
+
 # Create buttons
-buttons = [
-    Button(300, 200, "assets\Buttons\play.png", 200, 100, "start_level_selection"),
-    Button(300, 350, "assets\Buttons\quit.png", 200, 100, "quit_game")
+Startbutton_images = [
+    "assets/Buttons/Start1.png",
+    "assets/Buttons/Start2.png",
+    "assets/Buttons/Start3.png",
+    "assets/Buttons/Start4.png"
 ]
 
-# Load the image to be displayed for the level
-level_image = pygame.image.load("assets\Comics\comic1_1.png")
-level_image = pygame.transform.scale(level_image, (width, height))
+StartClick_images = [
+    "assets/Buttons/StartClick1.png",
+    "assets/Buttons/StartClick2.png",
+    "assets/Buttons/StartClick3.png"
+]
+
+dialogue_progress = -1  # Variable to track the progress of the dialogue
+dialogue_texts = [
+        ["We have received reports that the thief sightings are in this room."],
+        ["You guys had come, the thief had messed up my room quite bad…"],
+        ["I mean it’s cool and all but I can’t see anything."],
+        ["(can you even see anything with that hairstyle?)"],
+        ["This is your time to show them your ability, detective!"]
+    ]
+
+dialogue_backgrounds = [
+        pygame.image.load("assets/Dialogue/dialogueAssistantCalm.png"),
+        pygame.image.load("assets/Dialogue/dialogueEmoCalm.png"),
+        pygame.image.load("assets/Dialogue/dialogueEmoShrug.png"),
+        pygame.image.load("assets/Dialogue/dialogueAssistantAnnoyed.png"),
+        pygame.image.load("assets/Dialogue/dialogueChiefHappy.png")
+    ]
+
+start_button = Button(300, 400, Startbutton_images, StartClick_images, 200, 100, "Start_anim1", frame_rate=200)
 
 def main_menu():
+    # Load frames for animated background
+    animated_BG = [
+        "assets/animationMenu/1.png",
+        "assets/animationMenu/2.png",
+        "assets/animationMenu/3.png",
+        "assets/animationMenu/4.png",
+        "assets/animationMenu/5.png",
+        "assets/animationMenu/6.png",
+        "assets/animationMenu/7.png",
+        "assets/animationMenu/8.png",
+        "assets/animationMenu/9.png",
+        "assets/animationMenu/10.png",
+        "assets/animationMenu/11.png",
+        "assets/animationMenu/12.png",
+        "assets/animationMenu/13.png",
+        "assets/animationMenu/14.png",
+        "assets/animationMenu/15.png",
+        "assets/animationMenu/16.png",
+        "assets/animationMenu/17.png",
+        "assets/animationMenu/18.png",
+        "assets/animationMenu/19.png",
+        "assets/animationMenu/20.png",
+        "assets/animationMenu/21.png",
+        "assets/animationMenu/22.png",
+        "assets/animationMenu/23.png",
+        "assets/animationMenu/24.png",
+        "assets/animationMenu/25.png",
+        "assets/animationMenu/26.png",
+        "assets/animationMenu/27.png",
+        "assets/animationMenu/28.png",
+        "assets/animationMenu/29.png",
+        "assets/animationMenu/30.png",
+        "assets/animationMenu/31.png",
+        "assets/animationMenu/32.png",
+        "assets/animationMenu/33.png"
+    ]
+
+    bg_images = [pygame.transform.scale(pygame.image.load(image).convert_alpha(), (width, height)) for image in animated_BG]
+    current_bg_frame = 0
+    bg_frame_rate = 200  # Adjust this to change the speed of the background animation
+    bg_frame_count = 0
+
     # Load and scale story images to match the size of the Pygame window
     story_images = [
-        pygame.transform.scale(pygame.image.load("assets\Comics\comic1_1.png"), (width, height)),
-        pygame.transform.scale(pygame.image.load("assets\Comics\comic1_2.png"), (width, height)),
-        pygame.transform.scale(pygame.image.load("assets\Comics\comic1_3.png"), (width, height)),
-        pygame.transform.scale(pygame.image.load("assets\Comics\comic1_4.png"), (width, height)),
-        pygame.transform.scale(pygame.image.load("assets\Comics\comic1_5.png"), (width, height)),
-        pygame.transform.scale(pygame.image.load("assets\Comics\comic1_6.png"), (width, height)),
-        pygame.transform.scale(pygame.image.load("assets\Comics\comic1_7.png"), (width, height)),
-        pygame.transform.scale(pygame.image.load("assets\Comics\comic1_8.png"), (width, height))
+        pygame.transform.scale(pygame.image.load("assets/Comics/comic1_1.png"), (width, height)),
+        pygame.transform.scale(pygame.image.load("assets/Comics/comic1_2.png"), (width, height)),
+        pygame.transform.scale(pygame.image.load("assets/Comics/comic1_3.png"), (width, height)),
+        pygame.transform.scale(pygame.image.load("assets/Comics/comic1_4.png"), (width, height)),
+        pygame.transform.scale(pygame.image.load("assets/Comics/comic1_5.png"), (width, height)),
+        pygame.transform.scale(pygame.image.load("assets/Comics/comic1_6.png"), (width, height)),
+        pygame.transform.scale(pygame.image.load("assets/Comics/comic1_7.png"), (width, height)),
+        pygame.transform.scale(pygame.image.load("assets/Comics/comic1_8.png"), (width, height))
     ]
     
     current_page = 0
     showing_story = False
     show_buttons = True
+    clicked_button_action = None
 
     while True:
         screen.fill((0, 0, 0))
+
+        # Draw animated background
+        screen.blit(bg_images[current_bg_frame], (0, 0))
+        bg_frame_count += 1
+        if bg_frame_count >= bg_frame_rate:
+            bg_frame_count = 0
+            current_bg_frame = (current_bg_frame + 1) % len(bg_images)
 
         if showing_story:
             screen.blit(story_images[current_page], (0, 0))
         else:
             if show_buttons:
-                for button in buttons:
-                    button.draw(screen)
+                start_button.draw(screen)
 
         for event in pygame.event.get():
             if event.type == QUIT:
@@ -78,21 +202,21 @@ def main_menu():
                         # Show level selection screen when the last page is reached
                         showing_story = False
                         show_buttons = False
-                        lvlSelection()
+                        level_one_scene()
                 else:
-                    for button in buttons:
-                        action = button.handle_event(event)
-                        if action:
-                            if action == "start_level_selection":
-                                showing_story = True
-                                current_page = 0
-                                show_buttons = False
-                            elif action == "quit_game":
-                                pygame.quit()
-                                sys.exit()
+                    action = start_button.handle_event(event)
+                    if action:
+                        clicked_button_action = action
+
+        if clicked_button_action:
+            if start_button.is_click_animation_done():
+                if clicked_button_action == "Start_anim1":
+                    showing_story = True
+                    current_page = 0
+                    show_buttons = False
+                clicked_button_action = None
 
         pygame.display.flip()
 
 # Run the main menu
 main_menu()
-

@@ -41,32 +41,32 @@ def level_three_scene():
     pygame.display.set_caption("FYP Game")
 
     # Load background image and set its rectangle
-    background_image = pygame.image.load("maze.png").convert_alpha()  # Load with alpha channel
+    background_image = pygame.image.load("assets\Bg\maze.png").convert_alpha()  # Load with alpha channel
     background_rect = background_image.get_rect()
     background_rect.center = (width // 2, height // 2)
     #mask
     background_mask = pygame.mask.from_surface(background_image)
 
     # Load globe image and set its rectangle
-    globe_image = pygame.image.load("globe.png")
+    globe_image = pygame.image.load("assets\Items\key.png")
     globe_rect = globe_image.get_rect()
 
-    globe_position = (500, 350) 
+    globe_position = (100, 420) 
     globe_rect.center = globe_position
 
     # Load dumbbells image and set its rectangle
-    dumbells_image = pygame.image.load("dumbells.png")
+    dumbells_image = pygame.image.load("assets\Items\key2.png")
     dumbells_rect = dumbells_image.get_rect()
 
-    scale_factor = 0.5
-    dumbells_image = pygame.transform.scale(dumbells_image, (int(dumbells_image.get_width() * scale_factor), int(dumbells_image.get_height() * scale_factor)))
-
-    dumbells_position = (437, 320) 
+    dumbells_position = (40, 140) 
     dumbells_rect.center = dumbells_position
 
     # Create rectangles for collision detection
     globe_rect = globe_image.get_rect(center=globe_position)
     dumbells_rect = dumbells_image.get_rect(center=dumbells_position)
+
+    initial_globe_position = globe_position
+    initial_dumbells_position = dumbells_position
 
     # Boolean variables to track if the globe and dumbbell are visible
     globe_visible = True
@@ -75,7 +75,7 @@ def level_three_scene():
 
     # Initialize face detector and shape predictor
     detector = dlib.get_frontal_face_detector()
-    predictor = dlib.shape_predictor('shape_predictor_68_face_landmarks.dat\shape_predictor_68_face_landmarks.dat')
+    predictor = dlib.shape_predictor('shape_predictor\shape_predictor_68_face_landmarks.dat')
     left = [36, 37, 38, 39, 40, 41]
     right = [42, 43, 44, 45, 46, 47]
 
@@ -173,6 +173,7 @@ def level_three_scene():
             offset = (dumbells_rect.x - background_rect.x, dumbells_rect.y - background_rect.y)
             if background_mask.overlap(dumbells_mask, offset):
                 print("Collision with background detected for dumbbells!")
+                dumbells_rect.center = initial_dumbells_position
                 # Handle collision action here
 
         if globe_visible:
@@ -180,6 +181,7 @@ def level_three_scene():
             offset = (globe_rect.x - background_rect.x, globe_rect.y - background_rect.y)
             if background_mask.overlap(globe_mask, offset):
                 print("Collision with background detected for globe!")
+                globe_rect.center = initial_globe_position
 
 
         if cx_left is not None and cy_left is not None and cx_right is not None and cy_right is not None:

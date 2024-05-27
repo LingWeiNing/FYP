@@ -4,6 +4,7 @@ import numpy as np
 import pygame
 from pygame.locals import *
 import sys
+import pygame.mixer
 
 def shape_to_np(shape, dtype="int"):
     coords = np.zeros((68, 2), dtype=dtype)
@@ -82,10 +83,32 @@ def show_win_screen(width, height, screen):
 def level_one_scene():
     # Initialize Pygame
     pygame.init()
+    pygame.mixer.init()
+
+    item_found_sound = pygame.mixer.Sound("assets\SoundEffect\Bling.mp3")
 
     # Set up the Pygame window
     width, height = 800, 600
     screen = pygame.display.set_mode((width, height))
+
+    tutorial_image_paths = [
+        "assets/goodjob/tutorialBunny1.png",
+        "assets/goodjob/tutorialBunny2.png",
+        "assets/goodjob/tutorialBunny3.png"
+    ]
+
+    explanation_clue = [
+        "assets/goodjob/tutorialBunny1.png",
+        "assets/goodjob/tutorialBunny2.png",
+        "assets/goodjob/tutorialBunny3.png"
+    ]
+    
+    praise_image_path = "assets/goodjob/GoodJobChief.png"
+
+    # Load tutorial images
+    tutorial_images = [pygame.image.load(path) for path in tutorial_image_paths]
+    tutorial_images = [pygame.transform.scale(image, (int(image.get_width()), int(image.get_height()))) for image in tutorial_images]
+    tutorial_image_rect = tutorial_images[0].get_rect(center=(width // 2 - 270, height // 2 + 25))
 
     # Load background image and set its rectangle
     background_image = pygame.image.load("assets/Bg/Background.png")
@@ -139,15 +162,20 @@ def level_one_scene():
     item_silhouettes_rects = []
     for i, item in enumerate(items):
         image_path, position, _ = item
-        silhouette_rect = item_silhouettes[i].get_rect(center=(itemBox_rect.left + 40 + i * 80, itemBox_rect.top + 30))
+        silhouette_rect = item_silhouettes[i].get_rect(center=(itemBox_rect.left + 100 + i * 100, itemBox_rect.top + 50))
         item_silhouettes_rects.append(silhouette_rect)
 
     # Boolean variables to track if the items are visible
     items_visible = [True] * len(items)
 
+    # Load praise image
+    praise_image = pygame.image.load(praise_image_path)
+    praise_image = pygame.transform.scale(praise_image, (int(praise_image.get_width()), int(praise_image.get_height())))
+    praise_image_rect = praise_image.get_rect(center=(width // 2 + 200, height // 2 + 65))
+
     # Initialize face detector and shape predictor
     detector = dlib.get_frontal_face_detector()
-    predictor = dlib.shape_predictor('shape_predictor\shape_predictor_68_face_landmarks.dat')
+    predictor = dlib.shape_predictor('shape_predictor/shape_predictor_68_face_landmarks.dat')
     left = [36, 37, 38, 39, 40, 41]
     right = [42, 43, 44, 45, 46, 47]
 
@@ -164,6 +192,11 @@ def level_one_scene():
     # Countdown timer setup
     start_time = pygame.time.get_ticks()
     countdown_duration = 90
+
+    praise_display_time = 0  # Initialize display time for praise image
+
+    hammer_clicked = False
+    tutorial_image_1_time = 0
 
     # Main game loop
     while True:
@@ -190,7 +223,13 @@ def level_one_scene():
                             if dist_to_center < mask_radius and item_rect.collidepoint(mouse_pos) and items_visible[i]:
                                 # Toggle the visibility of the item silhouette
                                 items_visible[i] = False
+                                praise_display_time = pygame.time.get_ticks()  # Set praise image display time
+                                item_found_sound.play()
 
+                                # Check if the hammer item is clicked
+                                if image_path == "hammer.png":
+                                    hammer_clicked = True  # Set hammer_clicked to True
+                                    tutorial_image_1_time = pygame.time.get_ticks()
                     else:
                         print("Player's eye position not detected.")
 
@@ -256,6 +295,19 @@ def level_one_scene():
         text_surface = font.render(f"Time: {minutes:02}:{seconds:02}", True, (255, 255, 255))
         screen.blit(text_surface, (10, 10))
 
+        # Display praise image for a short duration
+        if pygame.time.get_ticks() - praise_display_time < 1000:  # Display for 1 second
+            screen.blit(praise_image, praise_image_rect)
+
+        if not hammer_clicked:
+            if elapsed_time < 3000:
+                screen.blit(tutorial_images[1], tutorial_image_rect)
+            elif 3000 <= elapsed_time < 8000:
+                screen.blit(tutorial_images[2], tutorial_image_rect)
+        else:
+            if pygame.time.get_ticks() - tutorial_image_1_time < 3000:  # Display tutorial image 1 for 3 seconds
+                screen.blit(tutorial_images[0], tutorial_image_rect)
+
         # Check for win condition
         if remaining_time >= 0 and all(not visible for visible in items_visible):
             restart_button, quit_button = show_win_screen(width, height, screen)
@@ -269,24 +321,7 @@ def level_one_scene():
         pygame.display.flip()
         clock.tick(60)
 
-    # Game over event loop
-    while True:
-        for event in pygame.event.get():
-            if event.type == QUIT:
-                cap.release()
-                pygame.quit()
-                sys.exit()
-            elif event.type == MOUSEBUTTONDOWN and event.button == 1:
-                mouse_pos = pygame.mouse.get_pos()
 
-                if restart_button.collidepoint(mouse_pos):
-                    return level_one_scene()
-                elif quit_button.collidepoint(mouse_pos):
-                    cap.release()
-                    pygame.quit()
-                    sys.exit()
-
-        pygame.display.flip()
 
 if __name__ == "__main__":
     level_one_scene()
