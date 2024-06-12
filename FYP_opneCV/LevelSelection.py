@@ -1,18 +1,5 @@
 import pygame
-from pygame.locals import *
 import sys
-from Level_One import level_one_scene
-from Level_Two import level_two_scene
-from Level_Three import level_three_scene
-
-# Initialize Pygame
-pygame.init()
-
-# Set up the Pygame window
-width, height = 800, 600
-screen = pygame.display.set_mode((width, height))
-pygame.display.set_caption("Level Selection")
-
 
 def render_dialogue_text(text, font, maxwidth):
     words = text.split(" ")
@@ -28,144 +15,239 @@ def render_dialogue_text(text, font, maxwidth):
         lines.append(current_line)
     return lines
 
-def render_dialogue(screen, background, dialogue_texts, dialogue_backgrounds, dialogue_progress, maxwidth, x, y):
+def render_dialogue(screen, dialogue_texts, dialogue_backgrounds, dialogue_progress, maxwidth, x, y):
     if dialogue_progress >= 0 and dialogue_progress < len(dialogue_texts):
         screen.blit(dialogue_backgrounds[dialogue_progress], (0, 0))  # Draw background image for dialogue
         font = pygame.font.SysFont(None, 30)
-        lines = render_dialogue_text(dialogue_texts[dialogue_progress][0], font, maxwidth)
+        lines = render_dialogue_text(dialogue_texts[dialogue_progress], font, maxwidth)
         for line in lines:
             text_surface = font.render(line, True, (0, 0, 0))
             text_rect = text_surface.get_rect(center=(x, y))
             screen.blit(text_surface, text_rect)
             y += font.get_linesize()
 
-def lvlSelection():
-    x = 410
-    y = 480
-    maxwidth = 400
-    selected_level = None
-    dialogue_progress = -1  # Variable to track the progress of the dialogue
+def start_level_one():
+    import Level_One  # Import here to avoid circular import issues
+    x, y, maxwidth = 410, 480, 400
+    dialogue_progress = 0
+
     dialogue_texts = [
-        ["We have received reports that the thief sightings are in this room."],
-        ["You guys had come, the thief had messed up my room quite bad…"],
-        ["I mean it’s cool and all but I can’t see anything."],
-        ["(can you even see anything with that hairstyle?)"],
-        ["This is your time to show them your ability, detective!"]
+        "We have received reports that the thief sightings are in this house.",
+        "You guys had come, the thief had messed up my room quite bad…",
+        "I mean it’s cool and all but I can’t see anything.",
+        "(can you even see anything with that hairstyle?)",
+        "This is your time to show them your ability, detective!",
+        "(Alright..Let's do our best...)"
     ]
 
-    dialogue_texts_two = [
-        ["These clues from the kid’s room seem to be leading somewhere."],
-        ["Ah *winks* I guess you already know! To the gym!"],
-        ["Ah thank the gyms you are here officers! There was a guy sabotaging the gym and everything had turned dark!"],
-        ["Detective! It must be the thief! Is there any information about the guy Gym Bro?"],
-        ["I think the thief left something but…"],
-        ["I AM SO SCARED OF THE MOSQUITOES FLYING AROUND THE GYM!!!!!"],
-        ["*awkward*"],
-        ["No worries! The detective will help! *winks* right?"]
-    ]
-
-    dialogue_texts_three = [
-        ["Here is the vault!"],
-        ["Oh no, it seems like that darn thief had made some modifications to the lock!"],
-        ["I would love to help you detective but… I think I’m sick…"],
-        ["So I had decided to put my trust in you detective!"]
-    ]
-
-    dialogue_texts_four = [
-        ["As expected, my intuition is right!"],
-        ["What is in the middle? It’s a.. Box?"],
-        ["A puzzle box?"],
-        ["Heheh I’ll have to depend on your skills this time, Detective, good luck!"]
-    ]
-
-
-    button_clicked = False
-
-    # Load background images for each dialogue
     dialogue_backgrounds = [
-        pygame.image.load("assets/Dialogue/dialogueAssistantCalm.png"),
+        pygame.image.load("assets/Dialogue/dialogueAssistantCalm1.png"),
         pygame.image.load("assets/Dialogue/dialogueEmoCalm.png"),
         pygame.image.load("assets/Dialogue/dialogueEmoShrug.png"),
-        pygame.image.load("assets/Dialogue/dialogueAssistantAnnoyed.png"),
-        pygame.image.load("assets/Dialogue/dialogueChiefHappy.png")
+        pygame.image.load("assets/Dialogue/dialogueAssistantAnnoyed1.png"),
+        pygame.image.load("assets/Dialogue/dialogueChiefHappy1.png"),
+        pygame.image.load("assets/Dialogue/detectiveThinking1.png")
     ]
 
-    dialogue_backgrounds_two = [
-        pygame.image.load("assets/Dialogue/dialogueChiefCalm.png"),
-        pygame.image.load("assets/Dialogue/dialogueChiefWink.png"),
-        pygame.image.load("assets/Dialogue/dialoguegymBroCalm.png"),
-        pygame.image.load("assets/Dialogue/dialogueChiefCalm.png"),
-        pygame.image.load("assets/Dialogue/dialoguegymBroCalm.png"),
-        pygame.image.load("assets/Dialogue/dialoguegymBroShock.png"),
-        pygame.image.load("assets/Dialogue/dialogueplayerwithAssistantAwkward.png"),
-        pygame.image.load("assets/Dialogue/dialogueChiefWink.png"),
-    ]
-
-    dialogue_backgrounds_three = [
-        pygame.image.load("assets/Dialogue/dialogueChiefHappy.png"),
-        pygame.image.load("assets/Dialogue/dialogueChiefCry.png"),
-        pygame.image.load("assets/Dialogue/dialogueChiefCry.png"),
-        pygame.image.load("assets/Dialogue/dialogueChiefWink.png")
-    ]
-
-    dialogue_backgrounds_four = [
-        pygame.image.load("assets/Dialogue/dialogueChiefHappy.png"),
-        pygame.image.load("assets/Dialogue/dialogueChiefCalm.png"),
-        pygame.image.load("assets/Dialogue/dialogueChiefHuh.png"),
-        pygame.image.load("assets/Dialogue/dialogueChiefHappy.png")
-    ]
-    
+    width, height = 800, 600
+    screen = pygame.display.set_mode((width, height))
 
     while True:
         screen.fill((0, 0, 0))
-
-        if selected_level == "start_level_one":
-            render_dialogue(screen, dialogue_backgrounds[dialogue_progress], dialogue_texts, dialogue_backgrounds, dialogue_progress, maxwidth, x, y)
-
-        elif selected_level == "start_level_two":
-            render_dialogue(screen, dialogue_backgrounds_two[dialogue_progress], dialogue_texts_two, dialogue_backgrounds_two, dialogue_progress, maxwidth, x, y)
-
-        elif selected_level == "start_level_three":
-            render_dialogue(screen, dialogue_backgrounds_three[dialogue_progress], dialogue_texts_three, dialogue_backgrounds_three, dialogue_progress, maxwidth, x, y)
-        
-        elif selected_level == "start_level_four":
-            render_dialogue(screen, dialogue_backgrounds_four[dialogue_progress], dialogue_texts_four, dialogue_backgrounds_four, dialogue_progress, maxwidth, x, y)
+        render_dialogue(screen, dialogue_texts, dialogue_backgrounds, dialogue_progress, maxwidth, x, y)
 
         for event in pygame.event.get():
-            if event.type == QUIT:
+            if event.type == pygame.QUIT:
                 pygame.quit()
                 sys.exit()
-
             if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
-                if selected_level == "start_level_one":
-                    # Progress dialogue when the mouse is clicked
-                    if dialogue_progress < len(dialogue_texts) - 1:
-                        dialogue_progress += 1
-                    else:
-                        level_one_scene()  # Call the function to start the face detection scene
-
-                if selected_level == "start_level_two":
-                    # Progress dialogue when the mouse is clicked
-                    if dialogue_progress < len(dialogue_texts_two) - 1:
-                        dialogue_progress += 1
-                    else:
-                        level_two_scene()
-
-                if selected_level == "start_level_three":
-                    # Progress dialogue when the mouse is clicked
-                    if dialogue_progress < len(dialogue_texts_three) - 1:
-                        dialogue_progress += 1
-                    else:
-                        level_three_scene()
-
-                if selected_level == "start_level_four":
-                    # Progress dialogue when the mouse is clicked
-                    if dialogue_progress < len(dialogue_texts_four) - 1:
-                        dialogue_progress += 1
-                    else:
-                        lvlSelection()
+                if dialogue_progress < len(dialogue_texts) - 1:
+                    dialogue_progress += 1
+                else:
+                    Level_One.level_one_scene()  
 
         pygame.display.flip()
 
-# Run the main menu
-#lvlSelection()
+def start_level_two():
+    import Level_Two  # Import here to avoid circular import issues
+    x, y, maxwidth = 410, 480, 400
+    dialogue_progress = 0
+
+    dialogue_texts = [
+        "These clues from the kid’s room seem to be leading somewhere.",
+        "(Hmm.. it does seem to link to the gym, but what's with the mosquitoes?)",
+        "Ah *winks* I guess you already know! To the gym!",
+        "Ah thank the gyms you are here officers! There was a guy sabotaging the gym and everything had turned dark!",
+        "Detective! It must be the thief! Is there any information about the guy Gym Bro?",
+        "I think the thief left something but…",
+        "I AM SO SCARED OF THE MOSQUITOES FLYING AROUND THE GYM!!!!!",
+        "*awkward*",
+        "No worries! The detective will help! *winks* right?",
+        "(We'll need to help catch the mosquitoes in the gym)"
+    ]
+
+    dialogue_backgrounds = [
+        pygame.image.load("assets/Dialogue/dialogueChiefCalm1.png"),
+        pygame.image.load("assets/Dialogue/detectiveThinking2.png"),
+        pygame.image.load("assets/Dialogue/dialogueChiefWink1.png"),
+        pygame.image.load("assets/Dialogue/dialoguegymBroCalm1.png"),
+        pygame.image.load("assets/Dialogue/dialogueChiefCalm2.png"),
+        pygame.image.load("assets/Dialogue/dialoguegymBroCalm1.png"),
+        pygame.image.load("assets/Dialogue/dialoguegymBroShock.png"),
+        pygame.image.load("assets/Dialogue/dialogueplayerwithAssistantAwkward.png"),
+        pygame.image.load("assets/Dialogue/dialogueChiefWink2.png"),
+        pygame.image.load("assets/Dialogue/detectiveThinking3.png")
+    ]
+
+    width, height = 800, 600
+    screen = pygame.display.set_mode((width, height))
+
+    while True:
+        screen.fill((0, 0, 0))
+        render_dialogue(screen, dialogue_texts, dialogue_backgrounds, dialogue_progress, maxwidth, x, y)
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+            if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                if dialogue_progress < len(dialogue_texts) - 1:
+                    dialogue_progress += 1
+                else:
+                    Level_Two.level_two_scene() 
+
+        pygame.display.flip()
+
+def start_level_three():
+    import Level_Three
+    x, y, maxwidth = 410, 480, 400
+    dialogue_progress = 0
+
+    dialogue_texts = [
+        "Thank you so much for helping out! You guys are heroes!",
+        "About the thief... I think he left something before he escaped.",
+        "Ah here it is, I hope this is helpful for your search...",
+        "(Hmm this is some kind of a key...)",
+        "Ah, I know these keys! Let your best chief help you, detective!",
+        "These are the keys to the national bank vault!",
+        "(the national bank...??)",
+        "Here is the vault!",
+        "Oh no, it seems like that darn thief had made some modifications to the lock!",
+        "I would love to help you detective but… I think I’m sick…",
+        "So I had decided to put my trust in you detective!",
+        "(Hmm... seems like we have to use our eye ability to navigate the keys this time)"
+    ]
+
+    dialogue_backgrounds = [
+        pygame.image.load("assets/Dialogue/dialoguegymBroCalm2.png"),
+        pygame.image.load("assets/Dialogue/dialoguegymBroCalm2.png"),
+        pygame.image.load("assets/Dialogue/dialoguegymBroCalm3.png"),
+        pygame.image.load("assets/Dialogue/detectiveThinking2.png"),
+        pygame.image.load("assets/Dialogue/dialogueChiefWink1.png"),
+        pygame.image.load("assets/Dialogue/dialogueChiefHappy3.png"),
+        pygame.image.load("assets/Dialogue/dialogueplayerwithAssistantAwkward2.png"),
+        pygame.image.load("assets/Dialogue/dialogueChiefHappy2.png"),
+        pygame.image.load("assets/Dialogue/dialogueChiefCry2.png"),
+        pygame.image.load("assets/Dialogue/dialogueChiefCry2.png"),
+        pygame.image.load("assets/Dialogue/dialogueChiefWink3.png"),
+        pygame.image.load("assets/Dialogue/detectiveThinking4.png")
+    ]
+
+    width, height = 800, 600
+    screen = pygame.display.set_mode((width, height))
+
+    while True:
+        screen.fill((0, 0, 0))
+        render_dialogue(screen, dialogue_texts, dialogue_backgrounds, dialogue_progress, maxwidth, x, y)
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+            if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                if dialogue_progress < len(dialogue_texts) - 1:
+                    dialogue_progress += 1
+                else:
+                    Level_Three.level_three_scene() 
+
+        pygame.display.flip()
+
+def start_level_four():
+    import Level_Four
+    x, y, maxwidth = 410, 480, 400
+    dialogue_progress = 0
+
+    dialogue_texts = [
+        "The vault has opened! As expected by our dear detective! Good job!",
+        "What is in the middle? It’s a.. Box?",
+        "It's a puzzle box?",
+        "Heheh I’ll have to depend on your skills this time, Detective, good luck!",
+        "(Hmm we'll have to take and move the puzzle pieces to their correct positions for a reveal..)"
+    ]
+
+    dialogue_backgrounds = [
+        pygame.image.load("assets/Dialogue/dialogueChiefHappy4.png"),
+        pygame.image.load("assets/Dialogue/dialogueChiefHuh1.png"),
+        pygame.image.load("assets/Dialogue/dialogueChiefHuh1.png"),
+        pygame.image.load("assets/Dialogue/dialogueChiefHappy4.png"),
+        pygame.image.load("assets/Dialogue/detectiveThinking5.png")
+    ]
+
+    width, height = 800, 600
+    screen = pygame.display.set_mode((width, height))
+
+    while True:
+        screen.fill((0, 0, 0))
+        render_dialogue(screen, dialogue_texts, dialogue_backgrounds, dialogue_progress, maxwidth, x, y)
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+            if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                if dialogue_progress < len(dialogue_texts) - 1:
+                    dialogue_progress += 1
+                else:
+                    Level_Four.level_four_scene()  
+
+        pygame.display.flip()
+
+
+def start_ending():
+    import main
+    x, y, maxwidth = 410, 480, 400
+    dialogue_progress = 0
+
+    dialogue_texts = [
+        "Detective! The Chief! He had been taken by the thief!",
+        "He was trying to go to the toilet but the thief snatched him away!",
+        "We must hurry, the thief must had went to the next location as shown in the puzzle!",
+        "(The thief must had taken the Chief to the museum! We must hurry!)",
+    ]
+
+    dialogue_backgrounds = [
+        pygame.image.load("assets/Dialogue/dialogueAssistantPanic1.png"),
+        pygame.image.load("assets/Dialogue/dialogueAssistantPanic1.png"),
+        pygame.image.load("assets/Dialogue/dialogueAssistantPanic1.png"),
+        pygame.image.load("assets/Dialogue/detectiveThinking6.png")
+    ]
+
+    width, height = 800, 600
+    screen = pygame.display.set_mode((width, height))
+
+    while True:
+        screen.fill((0, 0, 0))
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+            if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                if dialogue_progress < len(dialogue_texts) - 1:
+                    dialogue_progress += 1
+                else:
+                    main.main_menu()
+
+        render_dialogue(screen, dialogue_texts, dialogue_backgrounds, dialogue_progress, maxwidth, x, y)
+
+        pygame.display.flip()
+

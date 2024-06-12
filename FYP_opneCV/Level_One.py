@@ -5,6 +5,8 @@ import pygame
 from pygame.locals import *
 import sys
 import pygame.mixer
+from buttonScene import show_game_over_screen, show_win_screen, show_pause_screen, draw_pause_button
+from LevelSelection import start_level_two
 
 def shape_to_np(shape, dtype="int"):
     coords = np.zeros((68, 2), dtype=dtype)
@@ -32,60 +34,16 @@ def contouring(thresh, mid, img, right=False):
     except:
         return None, None
 
-def show_game_over_screen(width, height, screen):
-    # Game Over text
-    font_game_over = pygame.font.Font(None, 100)
-    text_game_over = font_game_over.render("Game Over", True, (255, 0, 0))
-    screen.blit(text_game_over, (width // 2 - text_game_over.get_width() // 2, height // 2 - text_game_over.get_height() // 2 - 100))
-
-    # Restart button
-    restart_button = pygame.Rect(width // 2 - 100, height // 2, 200, 50)
-    pygame.draw.rect(screen, (255, 255, 255), restart_button)
-    font_restart = pygame.font.Font(None, 36)
-    text_restart = font_restart.render("Restart", True, (0, 0, 0))
-    screen.blit(text_restart, (width // 2 - text_restart.get_width() // 2, height // 2 + 10))
-
-    # Quit button
-    quit_button = pygame.Rect(width // 2 - 100, height // 2 + 70, 200, 50)
-    pygame.draw.rect(screen, (255, 255, 255), quit_button)
-    font_quit = pygame.font.Font(None, 36)
-    text_quit = font_quit.render("Quit", True, (0, 0, 0))
-    screen.blit(text_quit, (width // 2 - text_quit.get_width() // 2, height // 2 + 80))
-
+def display_explanation(screen, explanation_image):
+    screen.blit(explanation_image, (0, 0))  # Display detective thinking image
     pygame.display.flip()
-
-    return restart_button, quit_button
-
-def show_win_screen(width, height, screen):
-    # Game Over text
-    font_game_over = pygame.font.Font(None, 100)
-    text_game_over = font_game_over.render("Good Job!", True, (255, 0, 0))
-    screen.blit(text_game_over, (width // 2 - text_game_over.get_width() // 2, height // 2 - text_game_over.get_height() // 2 - 100))
-
-    # Restart button
-    restart_button = pygame.Rect(width // 2 - 100, height // 2, 200, 50)
-    pygame.draw.rect(screen, (255, 255, 255), restart_button)
-    font_restart = pygame.font.Font(None, 36)
-    text_restart = font_restart.render("Next Level", True, (0, 0, 0))
-    screen.blit(text_restart, (width // 2 - text_restart.get_width() // 2, height // 2 + 10))
-
-    # Quit button
-    quit_button = pygame.Rect(width // 2 - 100, height // 2 + 70, 200, 50)
-    pygame.draw.rect(screen, (255, 255, 255), quit_button)
-    font_quit = pygame.font.Font(None, 36)
-    text_quit = font_quit.render("Quit", True, (0, 0, 0))
-    screen.blit(text_quit, (width // 2 - text_quit.get_width() // 2, height // 2 + 80))
-
-    pygame.display.flip()
-
-    return restart_button, quit_button
 
 def level_one_scene():
     # Initialize Pygame
     pygame.init()
     pygame.mixer.init()
 
-    item_found_sound = pygame.mixer.Sound("assets\SoundEffect\Bling.mp3")
+    item_found_sound = pygame.mixer.Sound("assets/SoundEffect/Bling.mp3")
 
     # Set up the Pygame window
     width, height = 800, 600
@@ -97,13 +55,15 @@ def level_one_scene():
         "assets/goodjob/tutorialBunny3.png"
     ]
 
-    explanation_clue = [
-        "assets/goodjob/tutorialBunny1.png",
-        "assets/goodjob/tutorialBunny2.png",
-        "assets/goodjob/tutorialBunny3.png"
-    ]
-    
-    praise_image_path = "assets/goodjob/GoodJobChief.png"
+    explanation_image_paths = {
+        "hammer.png": "assets/goodjob/detectiveThinking_hammer.png",
+        "dumbells.png": "assets/goodjob/detectiveThinking_dumbells.png",
+        "globe.png": "assets/goodjob/detectiveThinking_globe.png",
+        "laptop.png": "assets/goodjob/detectiveThinking_laptop.png",
+        "mosquitoTrap.png": "assets/goodjob/detectiveThinking_mosquitoTrap.png",
+        "socks.png": "assets/goodjob/detectiveThinking_socks.png",
+        "tape.png": "assets/goodjob/detectiveThinking_tape.png"
+    }
 
     # Load tutorial images
     tutorial_images = [pygame.image.load(path) for path in tutorial_image_paths]
@@ -168,10 +128,9 @@ def level_one_scene():
     # Boolean variables to track if the items are visible
     items_visible = [True] * len(items)
 
-    # Load praise image
-    praise_image = pygame.image.load(praise_image_path)
-    praise_image = pygame.transform.scale(praise_image, (int(praise_image.get_width()), int(praise_image.get_height())))
-    praise_image_rect = praise_image.get_rect(center=(width // 2 + 200, height // 2 + 65))
+    explanation_images = {path: pygame.image.load(explanation_image_paths[path]) for path in explanation_image_paths}
+    explanation_images = {path: pygame.transform.scale(explanation_images[path], (int(explanation_images[path].get_width()), int(explanation_images[path].get_height()))) for path in explanation_images}
+    explanation_image_rects = {path: explanation_images[path].get_rect(center=(width // 2 + 210, height // 2 + 35)) for path in explanation_images}
 
     # Initialize face detector and shape predictor
     detector = dlib.get_frontal_face_detector()
@@ -193,12 +152,18 @@ def level_one_scene():
     start_time = pygame.time.get_ticks()
     countdown_duration = 90
 
-    praise_display_time = 0  # Initialize display time for praise image
+    praise_display_time = -5000
 
-    hammer_clicked = False
+    clicked_item = None  # Track which item was clicked
     tutorial_image_1_time = 0
+    hammer_clicked = False
 
-    # Main game loop
+    pause_button_rect = pygame.Rect(width - 100, 10, 80, 40)
+    paused = False
+    pause_start_time = 0
+
+    elapsed_paused_time = 0 
+
     while True:
         mouse_pos = None  # Initialize mouse_pos outside of the event loop
         for event in pygame.event.get():
@@ -210,118 +175,171 @@ def level_one_scene():
                 # Get the position of the mouse cursor
                 mouse_pos = pygame.mouse.get_pos()
 
-                # Check if the mouse cursor is within the circular mask
-                if mask_surface.get_rect().collidepoint(mouse_pos):
-                    if cx_left is not None and cy_left is not None and cx_right is not None and cy_right is not None:
-                        # Calculate the distance between the mouse cursor and the center of the circular mask
-                        dist_to_center = ((mouse_pos[0] - cx_right) ** 2 + (mouse_pos[1] - cy_left) ** 2) ** 0.5
+                # Check if the mouse cursor is within the pause button
+                if pause_button_rect.collidepoint(mouse_pos):
+                    if not paused:
+                        # Pause the game
+                        paused = True
+                        pause_start_time = pygame.time.get_ticks()
+                        # Show the pause screen
+                        resume_button, quit_button = show_pause_screen(width, height, screen)
+                        while paused:
+                            for event in pygame.event.get():
+                                if event.type == QUIT:
+                                    cap.release()
+                                    pygame.quit()
+                                    sys.exit()
+                                elif event.type == MOUSEBUTTONDOWN and event.button == 1:
+                                    if resume_button.collidepoint(event.pos):
+                                        # Resume the game
+                                        paused = False
+                                        elapsed_paused_time += pygame.time.get_ticks() - pause_start_time
+                                    elif quit_button.collidepoint(event.pos):
+                                        cap.release()
+                                        pygame.quit()
+                                        sys.exit()
+                else:
+                    # Check if the mouse cursor is within the circular mask
+                    if mask_surface.get_rect().collidepoint(mouse_pos):
+                        if cx_left is not None and cy_left is not None and cx_right is not None and cy_right is not None:
+                            # Calculate the distance between the mouse cursor and the center of the circular mask
+                            dist_to_center = ((mouse_pos[0] - cx_right) ** 2 + (mouse_pos[1] - cy_left) ** 2) ** 0.5
 
-                        for i, item in enumerate(items):
-                            image_path, _, _ = item
-                            item_rect = globals()[f"{image_path.split('.')[0]}_rect"]
+                            for i, item in enumerate(items):
+                                image_path, _, _ = item
+                                item_rect = globals()[f"{image_path.split('.')[0]}_rect"]
 
-                            if dist_to_center < mask_radius and item_rect.collidepoint(mouse_pos) and items_visible[i]:
-                                # Toggle the visibility of the item silhouette
-                                items_visible[i] = False
-                                praise_display_time = pygame.time.get_ticks()  # Set praise image display time
-                                item_found_sound.play()
+                                if dist_to_center < mask_radius and item_rect.collidepoint(mouse_pos) and items_visible[i]:
+                                    # Toggle the visibility of the item silhouette
+                                    items_visible[i] = False
+                                    item_found_sound.play()
 
-                                # Check if the hammer item is clicked
-                                if image_path == "hammer.png":
-                                    hammer_clicked = True  # Set hammer_clicked to True
-                                    tutorial_image_1_time = pygame.time.get_ticks()
-                    else:
-                        print("Player's eye position not detected.")
+                                    # Set the clicked item and display the corresponding explanation image
+                                    clicked_item = image_path
+                                    praise_display_time = pygame.time.get_ticks()
+                                    if image_path == "hammer.png":
+                                        hammer_clicked = True
+                                        tutorial_image_1_time = pygame.time.get_ticks()
+                        else:
+                            print("Player's eye position not detected.")
+        if not paused:                    
+            if mouse_pos is not None and 0 <= mouse_pos[0] <= 800 and 0 <= mouse_pos[1] <= 600:
+                if 50 <= mouse_pos[0] <= 250 and 50 <= mouse_pos[1] <= 250:
+                    screen.fill((0, 0, 0))
 
-        ret, img = cap.read()
-        img = cv2.flip(img, 1)
+            ret, img = cap.read()
+            img = cv2.flip(img, 1)
 
-        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-        rects = detector(gray, 1)
+            gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+            rects = detector(gray, 1)
 
-        cx_left, cy_left, cx_right, cy_right = None, None, None, None
+            cx_left, cy_left, cx_right, cy_right = None, None, None, None
 
-        for rect in rects:
-            shape = predictor(gray, rect)
-            shape = shape_to_np(shape)
-            mask = np.zeros(img.shape[:2], dtype=np.uint8)
-            mask = eye_on_mask(mask, left, shape)
-            mask = eye_on_mask(mask, right, shape)
-            mask = cv2.dilate(mask, np.ones((9, 9), np.uint8), 5)
-            eyes = cv2.bitwise_and(img, img, mask=mask)
-            mask = (eyes == [0, 0, 0]).all(axis=2)
-            eyes[mask] = [255, 255, 255]
-            mid = (shape[42][0] + shape[39][0]) // 2
-            eyes_gray = cv2.cvtColor(eyes, cv2.COLOR_BGR2GRAY)
-            _, thresh = cv2.threshold(eyes_gray, 30, 255, cv2.THRESH_BINARY)
-            thresh = cv2.erode(thresh, None, iterations=2)
-            thresh = cv2.dilate(thresh, None, iterations=4)
-            thresh = cv2.medianBlur(thresh, 3)
-            thresh = cv2.bitwise_not(thresh)
-            cx_left, cy_left = contouring(thresh[:, 0:mid], mid, img)
-            cx_right, cy_right = contouring(thresh[:, mid:], mid, img, True)
+            for rect in rects:
+                shape = predictor(gray, rect)
+                shape = shape_to_np(shape)
+                mask = np.zeros(img.shape[:2], dtype=np.uint8)
+                mask = eye_on_mask(mask, left, shape)
+                mask = eye_on_mask(mask, right, shape)
+                mask = cv2.dilate(mask, np.ones((9, 9), np.uint8), 5)
+                eyes = cv2.bitwise_and(img, img, mask=mask)
+                mask = (eyes == [0, 0, 0]).all(axis=2)
+                eyes[mask] = [255, 255, 255]
+                mid = (shape[42][0] + shape[39][0]) // 2
+                eyes_gray = cv2.cvtColor(eyes, cv2.COLOR_BGR2GRAY)
+                _, thresh = cv2.threshold(eyes_gray, 30, 255, cv2.THRESH_BINARY)
+                thresh = cv2.erode(thresh, None, iterations=2)
+                thresh = cv2.dilate(thresh, None, iterations=4)
+                thresh = cv2.medianBlur(thresh, 3)
+                thresh = cv2.bitwise_not(thresh)
+                cx_left, cy_left = contouring(thresh[:, 0:mid], mid, img)
+                cx_right, cy_right = contouring(thresh[:, mid:], mid, img, True)
 
-        # Only update the transparent black mask surface where the circular mask around the eyes overlaps with it
-        if cx_left is not None and cy_left is not None and cx_right is not None and cy_right is not None:
-            # Create a circular mask around the eyes with a gradient effect
-            mask_surface.fill((0, 0, 0, 255))
-            mask_radius = 60
-            pygame.draw.circle(mask_surface, (0, 0, 0, 128), (cx_right, cy_left), mask_radius)
-            pygame.draw.circle(mask_surface, (0, 0, 0, 0), (cx_right, cy_left), mask_radius - 10)
+            # Only update the transparent black mask surface where the circular mask around the eyes overlaps with it
+            if cx_left is not None and cy_left is not None and cx_right is not None and cy_right is not None:
+                # Create a circular mask around the eyes with a gradient effect
+                mask_surface.fill((0, 0, 0, 255))
+                mask_radius = 60
+                pygame.draw.circle(mask_surface, (0, 0, 0, 128), (cx_right, cy_left), mask_radius)
+                pygame.draw.circle(mask_surface, (0, 0, 0, 0), (cx_right, cy_left), mask_radius - 10)
 
-        screen.blit(background_image, background_rect)
+            screen.blit(background_image, background_rect)
 
-        # Blit visible items
-        for i, (visible, image, rect) in enumerate(zip(items_visible, [globals()[f"{item.split('.')[0]}_image"] for item, _, _ in items], [globals()[f"{item.split('.')[0]}_rect"] for item, _, _ in items])):
-            if visible:
-                screen.blit(image, rect)
+            # Blit visible items
+            for i, (visible, image, rect) in enumerate(zip(items_visible, [globals()[f"{item.split('.')[0]}_image"] for item, _, _ in items], [globals()[f"{item.split('.')[0]}_rect"] for item, _, _ in items])):
+                if visible:
+                    screen.blit(image, rect)
 
-        screen.blit(mask_surface, (0, 0))
-        screen.blit(itemBox_image, itemBox_rect)
+            screen.blit(mask_surface, (0, 0))
+            screen.blit(itemBox_image, itemBox_rect)
 
-        # Blit item silhouettes
-        for i, (silhouette, rect) in enumerate(zip(item_silhouettes, item_silhouettes_rects)):
-            if items_visible[i]:
-                screen.blit(silhouette, rect)
+            # Blit item silhouettes
+            for i, (silhouette, rect) in enumerate(zip(item_silhouettes, item_silhouettes_rects)):
+                if items_visible[i]:
+                    screen.blit(silhouette, rect)
 
-        current_time = pygame.time.get_ticks()
-        elapsed_time = current_time - start_time
-        remaining_time = max(countdown_duration - int(elapsed_time / 1000), 0)
+            current_time = pygame.time.get_ticks()
+            elapsed_time = current_time - start_time - elapsed_paused_time
+            remaining_time = max(countdown_duration - int(elapsed_time / 1000), 0)
 
-        minutes = remaining_time // 60
-        seconds = remaining_time % 60
+            minutes = remaining_time // 60
+            seconds = remaining_time % 60
 
-        font = pygame.font.Font(None, 36)
-        text_surface = font.render(f"Time: {minutes:02}:{seconds:02}", True, (255, 255, 255))
-        screen.blit(text_surface, (10, 10))
+            font = pygame.font.Font(None, 36)
+            text_surface = font.render(f"Time: {minutes:02}:{seconds:02}", True, (255, 255, 255))
+            screen.blit(text_surface, (10, 10))
 
-        # Display praise image for a short duration
-        if pygame.time.get_ticks() - praise_display_time < 1000:  # Display for 1 second
-            screen.blit(praise_image, praise_image_rect)
+            # Display the explanation image for the clicked item for a short duration
+            if clicked_item and pygame.time.get_ticks() - praise_display_time < 5000:
+                screen.blit(explanation_images[clicked_item], explanation_image_rects[clicked_item])
 
-        if not hammer_clicked:
-            if elapsed_time < 3000:
-                screen.blit(tutorial_images[1], tutorial_image_rect)
-            elif 3000 <= elapsed_time < 8000:
-                screen.blit(tutorial_images[2], tutorial_image_rect)
-        else:
-            if pygame.time.get_ticks() - tutorial_image_1_time < 3000:  # Display tutorial image 1 for 3 seconds
-                screen.blit(tutorial_images[0], tutorial_image_rect)
+            if not hammer_clicked:
+                if elapsed_time < 3000:
+                    screen.blit(tutorial_images[1], tutorial_image_rect)
+                elif 3000 <= elapsed_time < 8000:
+                    screen.blit(tutorial_images[2], tutorial_image_rect)
+            else:
+                if pygame.time.get_ticks() - tutorial_image_1_time < 3000:  # Display tutorial image 1 for 3 seconds
+                    screen.blit(tutorial_images[0], tutorial_image_rect)
 
-        # Check for win condition
-        if remaining_time >= 0 and all(not visible for visible in items_visible):
-            restart_button, quit_button = show_win_screen(width, height, screen)
-            break  # Exit the game loop
+            if remaining_time <= 0:
+                restart_button, quit_button = show_game_over_screen(width, height, screen)
+                while True:
+                    event = pygame.event.wait()
+                    if event.type == QUIT:
+                        cap.release()
+                        pygame.quit()
+                        sys.exit()
+                    elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                        mouse_pos = pygame.mouse.get_pos()
+                        if restart_button.collidepoint(mouse_pos):
+                            level_one_scene()
+                        elif quit_button.collidepoint(mouse_pos):
+                            cap.release()
+                            pygame.quit()
+                            sys.exit()
 
-        # Check for losing condition
-        if remaining_time <= 0:
-            restart_button, quit_button = show_game_over_screen(width, height, screen)
-            break  # Exit the game loop
+            if all(not visible for visible in items_visible):
+                next_button, quit_button = show_win_screen(width, height, screen)
+                while True:
+                    event = pygame.event.wait()
+                    if event.type == QUIT:
+                        cap.release()
+                        pygame.quit()
+                        sys.exit()
+                    elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                        mouse_pos = pygame.mouse.get_pos()
+                        if next_button.collidepoint(mouse_pos):
+                            start_level_two()
+                        elif quit_button.collidepoint(mouse_pos):
+                            cap.release()
+                            pygame.quit()
+                            sys.exit()
 
+
+        draw_pause_button(screen, pause_button_rect)
         pygame.display.flip()
         clock.tick(60)
-
-
 
 if __name__ == "__main__":
     level_one_scene()

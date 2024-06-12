@@ -5,6 +5,9 @@ import pygame
 from pygame.locals import *
 import sys
 import random
+import pygame.mixer
+from buttonScene import show_game_over_screen, show_win_screen, show_pause_screen, draw_pause_button
+from LevelSelection import start_level_three
 
 class Mosquito(pygame.sprite.Sprite):
     def __init__(self, images, x, y, speed, scale_factor):
@@ -28,11 +31,9 @@ class Mosquito(pygame.sprite.Sprite):
             self.index = (self.index + 1) % len(self.images)
             self.image = self.images[self.index]
 
-        # Update position
         self.rect.x += self.dx
         self.rect.y += self.dy
 
-        # Boundary checks and direction change
         if self.rect.left < 0:
             self.rect.left = 0
             self.dx = abs(self.dx)
@@ -46,19 +47,15 @@ class Mosquito(pygame.sprite.Sprite):
             self.rect.bottom = 600
             self.dy = -abs(self.dy)
 
-        # Calculate velocity
         velocity_x = self.rect.x - self.prev_x
 
-        # Flip the sprite based on the x velocity
         if velocity_x > 0:
             self.images = [pygame.transform.flip(image, True, False) for image in self.original_images]
         elif velocity_x < 0:
             self.images = self.original_images.copy()
 
-        # Update image with correct flip
         self.image = self.images[self.index]
 
-        # Update previous position
         self.prev_x = self.rect.x
         self.prev_y = self.rect.y
 
@@ -98,80 +95,35 @@ def contouring(thresh, mid, img, right=False):
     except:
         return None, None
     
-def show_game_over_screen(width, height, screen):
-    # Game Over text
-    font_game_over = pygame.font.Font(None, 100)
-    text_game_over = font_game_over.render("Game Over", True, (255, 0, 0))
-    screen.blit(text_game_over, (width // 2 - text_game_over.get_width() // 2, height // 2 - text_game_over.get_height() // 2 - 100))
-
-    # Restart button
-    restart_button = pygame.Rect(width // 2 - 100, height // 2, 200, 50)
-    pygame.draw.rect(screen, (255, 255, 255), restart_button)
-    font_restart = pygame.font.Font(None, 36)
-    text_restart = font_restart.render("Restart", True, (0, 0, 0))
-    screen.blit(text_restart, (width // 2 - text_restart.get_width() // 2, height // 2 + 10))
-
-    # Quit button
-    quit_button = pygame.Rect(width // 2 - 100, height // 2 + 70, 200, 50)
-    pygame.draw.rect(screen, (255, 255, 255), quit_button)
-    font_quit = pygame.font.Font(None, 36)
-    text_quit = font_quit.render("Quit", True, (0, 0, 0))
-    screen.blit(text_quit, (width // 2 - text_quit.get_width() // 2, height // 2 + 80))
-
-    pygame.display.flip()
-
-    return restart_button, quit_button
-
-def show_win_screen(width, height, screen):
-    # Game Over text
-    font_game_over = pygame.font.Font(None, 100)
-    text_game_over = font_game_over.render("Good Job!", True, (255, 0, 0))
-    screen.blit(text_game_over, (width // 2 - text_game_over.get_width() // 2, height // 2 - text_game_over.get_height() // 2 - 100))
-
-    # Restart button
-    restart_button = pygame.Rect(width // 2 - 100, height // 2, 200, 50)
-    pygame.draw.rect(screen, (255, 255, 255), restart_button)
-    font_restart = pygame.font.Font(None, 36)
-    text_restart = font_restart.render("Next Level", True, (0, 0, 0))
-    screen.blit(text_restart, (width // 2 - text_restart.get_width() // 2, height // 2 + 10))
-
-    # Quit button
-    quit_button = pygame.Rect(width // 2 - 100, height // 2 + 70, 200, 50)
-    pygame.draw.rect(screen, (255, 255, 255), quit_button)
-    font_quit = pygame.font.Font(None, 36)
-    text_quit = font_quit.render("Quit", True, (0, 0, 0))
-    screen.blit(text_quit, (width // 2 - text_quit.get_width() // 2, height // 2 + 80))
-
-    pygame.display.flip()
-
-    return restart_button, quit_button
 
 def level_two_scene():
     # Initialize Pygame
     pygame.init()
+    pygame.mixer.init()
 
-    # Set up the Pygame window
+    item_found_sound = pygame.mixer.Sound("assets/SoundEffect/Bling.mp3")
+
     width, height = 800, 600
     screen = pygame.display.set_mode((width, height))
     pygame.display.set_caption("FYP Game")
 
-    # Load background image and set its rectangle
     background_image = pygame.image.load("assets/Bg/gym.jpg")
     background_rect = background_image.get_rect()
     background_rect.center = (width // 2, height // 2)
 
-    # Initialize face detector and shape predictor
+    top_image = pygame.image.load("assets/Bg/top.png")
+    top_rect = top_image.get_rect()
+    top_rect.center = (width // 2, 70)
+
     detector = dlib.get_frontal_face_detector()
     predictor = dlib.shape_predictor('shape_predictor/shape_predictor_68_face_landmarks.dat')
     left = [36, 37, 38, 39, 40, 41]
     right = [42, 43, 44, 45, 46, 47]
 
-    # Initialize the webcam
     cap = cv2.VideoCapture(0)
     ret, img = cap.read()
     img = cv2.flip(img, 1)
 
-    # Set up Pygame clock
     clock = pygame.time.Clock()
 
     mosquito_images = [
@@ -181,15 +133,27 @@ def level_two_scene():
 
     mosquitoes = spawn_mosquitoes(5, mosquito_images, (100, 100))
 
-    # Initialize the mosquito counter
     mosquito_counter = 0
+
+    praising_image = pygame.image.load("assets/goodjob/GoodJobChief.png")
+    praising_rect = praising_image.get_rect(center=(600, 500))
+
+
+    show_praising_image = False
+    praising_image_display_time = 0
 
     threshold = 80
 
     mask_surface = pygame.Surface((width, height), pygame.SRCALPHA)
 
     start_time = pygame.time.get_ticks()
-    countdown_duration = 20
+    countdown_duration = 1
+
+    pause_button_rect = pygame.Rect(width - 100, 10, 80, 40)
+    paused = False
+    pause_start_time = 0
+
+    elapsed_paused_time = 0 
 
     # Main game loop
     while True:
@@ -199,102 +163,145 @@ def level_two_scene():
                 pygame.quit()
                 sys.exit()
             elif event.type == MOUSEBUTTONDOWN and event.button == 1:
-                # Get the position of the mouse cursor
                 mouse_pos = pygame.mouse.get_pos()
-
-                # Check if the mouse cursor is within the circular mask
-                if mask_surface.get_rect().collidepoint(mouse_pos):
+                if pause_button_rect.collidepoint(mouse_pos):
+                    paused = True
+                    pause_start_time = pygame.time.get_ticks()
+                elif mask_surface.get_rect().collidepoint(mouse_pos):
                     if cx_left is not None and cy_left is not None and cx_right is not None and cy_right is not None:
-                        # Calculate the distance between the mouse cursor and the center of the circular mask
                         dist_to_center = ((mouse_pos[0] - cx_right) ** 2 + (mouse_pos[1] - cy_left) ** 2) ** 0.5
                         if dist_to_center < mask_radius:
                             for mosquito in mosquitoes:
                                 if mosquito.rect.collidepoint(mouse_pos):
                                     mosquitoes.remove(mosquito)
-                                    mosquito_counter += 1  # Increment the mosquito counter
+                                    mosquito_counter += 1
+                                    item_found_sound.play()
                                     new_mosquito = Mosquito(mosquito_images, random.randint(0, 800), random.randint(0, 600), random.uniform(1, 3), (100, 100))
                                     mosquitoes.add(new_mosquito)
+                                    show_praising_image = True
+                                    praising_image_display_time = pygame.time.get_ticks()
                                     break
+            elif event.type == KEYDOWN:
+                if event.key == K_ESCAPE:
+                    if not paused:
+                        # Pause the game
+                        paused = True
+                        pause_start_time = pygame.time.get_ticks()
+        
+        if paused:
+            resume_button, quit_button = show_pause_screen(width, height, screen)
+            while paused:
+                for event in pygame.event.get():
+                    if event.type == QUIT:
+                        cap.release()
+                        pygame.quit()
+                        sys.exit()
+                    elif event.type == MOUSEBUTTONDOWN and event.button == 1:
+                        if resume_button.collidepoint(event.pos):
+                            paused = False
+                            elapsed_paused_time += pygame.time.get_ticks() - pause_start_time
+                        elif quit_button.collidepoint(event.pos):
+                            cap.release()
+                            pygame.quit()
+                            sys.exit()
 
-        ret, img = cap.read()
-        img = cv2.flip(img, 1)
+        if not paused:
+            ret, img = cap.read()
+            img = cv2.flip(img, 1)
 
-        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-        rects = detector(gray, 1)
+            gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+            rects = detector(gray, 1)
 
-        cx_left, cy_left, cx_right, cy_right = None, None, None, None
+            cx_left, cy_left, cx_right, cy_right = None, None, None, None
 
-        for rect in rects:
-            shape = predictor(gray, rect)
-            shape = shape_to_np(shape)
-            mask = np.zeros(img.shape[:2], dtype=np.uint8)
-            mask = eye_on_mask(mask, left, shape)
-            mask = eye_on_mask(mask, right, shape)
-            mask = cv2.dilate(mask, np.ones((9, 9), np.uint8), 5)
-            eyes = cv2.bitwise_and(img, img, mask=mask)
-            mask = (eyes == [0, 0, 0]).all(axis=2)
-            eyes[mask] = [255, 255, 255]
-            mid = (shape[42][0] + shape[39][0]) // 2
-            eyes_gray = cv2.cvtColor(eyes, cv2.COLOR_BGR2GRAY)
-            _, thresh = cv2.threshold(eyes_gray, 30, 255, cv2.THRESH_BINARY)
-            thresh = cv2.erode(thresh, None, iterations=2)
-            thresh = cv2.dilate(thresh, None, iterations=4)
-            thresh = cv2.medianBlur(thresh, 3)
-            thresh = cv2.bitwise_not(thresh)
-            cx_left, cy_left = contouring(thresh[:, 0:mid], mid, img)
-            cx_right, cy_right = contouring(thresh[:, mid:], mid, img, True)
+            for rect in rects:
+                shape = predictor(gray, rect)
+                shape = shape_to_np(shape)
+                mask = np.zeros(img.shape[:2], dtype=np.uint8)
+                mask = eye_on_mask(mask, left, shape)
+                mask = eye_on_mask(mask, right, shape)
+                mask = cv2.dilate(mask, np.ones((9, 9), np.uint8), 5)
+                eyes = cv2.bitwise_and(img, img, mask=mask)
+                mask = (eyes == [0, 0, 0]).all(axis=2)
+                eyes[mask] = [255, 255, 255]
+                mid = (shape[42][0] + shape[39][0]) // 2
+                eyes_gray = cv2.cvtColor(eyes, cv2.COLOR_BGR2GRAY)
+                _, thresh = cv2.threshold(eyes_gray, 30, 255, cv2.THRESH_BINARY)
+                thresh = cv2.erode(thresh, None, iterations=2)
+                thresh = cv2.dilate(thresh, None, iterations=4)
+                thresh = cv2.medianBlur(thresh, 3)
+                thresh = cv2.bitwise_not(thresh)
+                cx_left, cy_left = contouring(thresh[:, 0:mid], mid, img)
+                cx_right, cy_right = contouring(thresh[:, mid:], mid, img, True)
 
-        # Only update the transparent black mask surface where the circular mask around the eyes overlaps with it
-        if cx_left is not None and cy_left is not None and cx_right is not None and cy_right is not None:
-            # Create a circular mask around the eyes with a gradient effect
-            mask_surface.fill((0, 0, 0, 255))
-            mask_radius = 60
-            pygame.draw.circle(mask_surface, (0, 0, 0, 128), (cx_right, cy_left), mask_radius)
-            pygame.draw.circle(mask_surface, (0, 0, 0, 0), (cx_right, cy_left), mask_radius - 10)
+            if cx_left is not None and cy_left is not None and cx_right is not None and cy_right is not None:
+                # Create a circular mask around the eyes with a gradient effect
+                mask_surface.fill((0, 0, 0, 255))
+                mask_radius = 60
+                pygame.draw.circle(mask_surface, (0, 0, 0, 128), (cx_right, cy_left), mask_radius)
+                pygame.draw.circle(mask_surface, (0, 0, 0, 0), (cx_right, cy_left), mask_radius - 10)
 
-        # Blit the background image onto the screen
-        screen.blit(background_image, background_rect)
+            screen.blit(background_image, background_rect)
 
-        mosquitoes.update()
-        mosquitoes.draw(screen)
+            mosquitoes.update()
+            mosquitoes.draw(screen)
 
-        # Blit the updated transparent black mask surface onto the screen
-        screen.blit(mask_surface, (0, 0))
+            screen.blit(mask_surface, (0, 0))
 
-        # Display the mosquito counter
-        font = pygame.font.Font(None, 36)
-        counter_text = font.render(f'Mosquitoes removed: {mosquito_counter} /15', True, (255, 255, 255))
-        screen.blit(counter_text, (10, 10))
+            screen.blit(top_image, top_rect)
 
-        current_time = pygame.time.get_ticks()
-        elapsed_time = current_time - start_time
-        remaining_time = max(countdown_duration - int(elapsed_time / 1000), 0)
+            font = pygame.font.Font(None, 36)
+            counter_text = font.render(f'Mosquitoes removed: {mosquito_counter} /15', True, (255, 255, 255))
+            screen.blit(counter_text, (230, 10))
 
-        minutes = remaining_time // 60
-        seconds = remaining_time % 60
+            current_time = pygame.time.get_ticks()
+            elapsed_time = current_time - start_time - elapsed_paused_time
+            remaining_time = max(countdown_duration - int(elapsed_time / 1000), 0)
 
-        font = pygame.font.Font(None, 36)
-        text_surface = font.render(f"Time: {minutes:02}:{seconds:02}", True, (255, 255, 255))
-        screen.blit(text_surface, (10, 50))
+            minutes = remaining_time // 60
+            seconds = remaining_time % 60
 
-        # Check for win condition
-        if mosquito_counter >= 5:  # Check if 15 mosquitoes have been removed
-            restart_button, quit_button = show_win_screen(width, height, screen)
-            break  # Exit the game loop
+            font = pygame.font.Font(None, 36)
+            text_surface = font.render(f"Time: {minutes:02}:{seconds:02}", True, (255, 255, 255))
+            screen.blit(text_surface, (320, 50))
 
-        # Check for losing condition
-        if remaining_time <= 0:
-            restart_button, quit_button = show_game_over_screen(width, height, screen)
-            break  # Exit the game loop
+            if show_praising_image:
+                screen.blit(praising_image, praising_rect)
+                if current_time - praising_image_display_time >= 3000:
+                    show_praising_image = False
+
+            if remaining_time <= 0:
+                restart_button = show_game_over_screen(width, height, screen)
+                while True:
+                    event = pygame.event.wait()
+                    if event.type == QUIT:
+                        cap.release()
+                        pygame.quit()
+                        sys.exit()
+                    elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                        mouse_pos = pygame.mouse.get_pos()
+                        if restart_button.collidepoint(mouse_pos):
+                            level_two_scene()
+
+            if mosquito_counter >= 15:
+                restart_button = show_win_screen(width, height, screen)
+                while True:
+                    event = pygame.event.wait()
+                    if event.type == QUIT:
+                        cap.release()
+                        pygame.quit()
+                        sys.exit()
+                    elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                        mouse_pos = pygame.mouse.get_pos()
+                        if restart_button.collidepoint(mouse_pos):
+                            start_level_three()
+
+                            
+        draw_pause_button(screen, pause_button_rect)
 
         pygame.display.flip()
 
-        # Cap the frame rate
         clock.tick(60)
-
-    # Release the webcam and close the Pygame window
-    cap.release()
-    pygame.quit()
 
 if __name__ == "__main__":
     level_two_scene()
