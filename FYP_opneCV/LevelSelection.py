@@ -1,5 +1,8 @@
 import pygame
 import sys
+import pygame.mixer
+
+pygame.mixer.init()
 
 def render_dialogue_text(text, font, maxwidth):
     words = text.split(" ")
@@ -30,6 +33,9 @@ def start_level_one():
     import Level_One  # Import here to avoid circular import issues
     x, y, maxwidth = 410, 480, 400
     dialogue_progress = 0
+
+    BG_music = pygame.mixer.Sound("assets/Music/Mischievious-step.mp3")
+    BG_music.play()
 
     dialogue_texts = [
         "We have received reports that the thief sightings are in this house.",
@@ -64,6 +70,8 @@ def start_level_one():
                 if dialogue_progress < len(dialogue_texts) - 1:
                     dialogue_progress += 1
                 else:
+                    BG_music.stop() 
+                    BG_music = None
                     Level_One.level_one_scene()  
 
         pygame.display.flip()
@@ -72,6 +80,9 @@ def start_level_two():
     import Level_Two  # Import here to avoid circular import issues
     x, y, maxwidth = 410, 480, 400
     dialogue_progress = 0
+
+    BG_music = pygame.mixer.Sound("assets/Music/Mischievious-step.mp3")
+    BG_music.play()
 
     dialogue_texts = [
         "These clues from the kid’s room seem to be leading somewhere.",
@@ -114,6 +125,8 @@ def start_level_two():
                 if dialogue_progress < len(dialogue_texts) - 1:
                     dialogue_progress += 1
                 else:
+                    BG_music.stop() 
+                    BG_music = None
                     Level_Two.level_two_scene() 
 
         pygame.display.flip()
@@ -122,6 +135,9 @@ def start_level_three():
     import Level_Three
     x, y, maxwidth = 410, 480, 400
     dialogue_progress = 0
+
+    BG_music = pygame.mixer.Sound("assets/Music/Mischievious-step.mp3")
+    BG_music.play()
 
     dialogue_texts = [
         "Thank you so much for helping out! You guys are heroes!",
@@ -168,6 +184,8 @@ def start_level_three():
                 if dialogue_progress < len(dialogue_texts) - 1:
                     dialogue_progress += 1
                 else:
+                    BG_music.stop() 
+                    BG_music = None
                     Level_Three.level_three_scene() 
 
         pygame.display.flip()
@@ -176,6 +194,9 @@ def start_level_four():
     import Level_Four
     x, y, maxwidth = 410, 480, 400
     dialogue_progress = 0
+
+    BG_music = pygame.mixer.Sound("assets/Music/Mischievious-step.mp3")
+    BG_music.play()
 
     dialogue_texts = [
         "The vault has opened! As expected by our dear detective! Good job!",
@@ -208,46 +229,12 @@ def start_level_four():
                 if dialogue_progress < len(dialogue_texts) - 1:
                     dialogue_progress += 1
                 else:
+                    BG_music.stop() 
+                    BG_music = None
                     Level_Four.level_four_scene()  
 
         pygame.display.flip()
 
 
-def start_ending():
-    import main
-    x, y, maxwidth = 410, 480, 400
-    dialogue_progress = 0
 
-    dialogue_texts = [
-        "Detective! The Chief! He had been taken by the thief!",
-        "He was trying to go to the toilet but the thief snatched him away!",
-        "We must hurry, the thief must had went to the next location as shown in the puzzle!",
-        "(The thief must had taken the Chief to the museum! We must hurry!)",
-    ]
-
-    dialogue_backgrounds = [
-        pygame.image.load("assets/Dialogue/dialogueAssistantPanic1.png"),
-        pygame.image.load("assets/Dialogue/dialogueAssistantPanic1.png"),
-        pygame.image.load("assets/Dialogue/dialogueAssistantPanic1.png"),
-        pygame.image.load("assets/Dialogue/detectiveThinking6.png")
-    ]
-
-    width, height = 800, 600
-    screen = pygame.display.set_mode((width, height))
-
-    while True:
-        screen.fill((0, 0, 0))
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                pygame.quit()
-                sys.exit()
-            if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
-                if dialogue_progress < len(dialogue_texts) - 1:
-                    dialogue_progress += 1
-                else:
-                    main.main_menu()
-
-        render_dialogue(screen, dialogue_texts, dialogue_backgrounds, dialogue_progress, maxwidth, x, y)
-
-        pygame.display.flip()
 

@@ -5,9 +5,10 @@ import pygame
 from pygame.locals import *
 import sys
 import random
+import time
 import pygame.mixer
 from buttonScene import show_game_over_screen, show_win_screen, show_pause_screen, draw_pause_button
-from LevelSelection import start_ending
+from EndingScene import start_ending
 
 def shape_to_np(shape, dtype="int"):
     coords = np.zeros((68, 2), dtype=dtype)
@@ -61,13 +62,25 @@ def level_four_scene():
     pygame.display.set_caption("FYP Game")
 
     puzzle_image = pygame.image.load("assets/Bg/museum.jpg")
-    rows, cols = 2, 2
+    rows, cols = 3, 4
     pieces, piece_width, piece_height = cut_image(puzzle_image, rows, cols)
 
     puzzleclipped_sound = pygame.mixer.Sound("assets/SoundEffect/Bling.mp3")
+    BG_music = pygame.mixer.Sound("assets/Music/OperationDO.mp3")
+    BG_music.play()
 
     praising_image = pygame.image.load("assets/goodjob/GoodJobBunny.png")
     praising_rect = praising_image.get_rect(center=(600, 500))
+
+    tutorial_image_paths = [
+        "assets/goodjob/tutorialBunnyPuzzle1.png",
+        "assets/goodjob/tutorialBunnyPuzzle2.png",
+        "assets/goodjob/tutorialBunnyPuzzle3.png"
+    ]
+
+    tutorial_images = [pygame.image.load(path) for path in tutorial_image_paths]
+    tutorial_images = [pygame.transform.scale(image, (int(image.get_width()), int(image.get_height()))) for image in tutorial_images]
+    tutorial_image_rect = tutorial_images[0].get_rect(center=(width // 2 - 270, height // 2 + 150))
 
     shuffled_positions = shuffle_pieces(pieces, rows, cols)
 
@@ -90,7 +103,10 @@ def level_four_scene():
     img = cv2.flip(img, 1)
 
     start_time = pygame.time.get_ticks()
-    countdown_time = 1
+    countdown_time = 120
+
+    show_praising_image = False
+    praising_image_display_time = 0
 
     font_timer = pygame.font.Font(None, 36)
 
@@ -100,6 +116,10 @@ def level_four_scene():
         if abs(x - correct_x) < piece_width // 3 and abs(y - correct_y) < piece_height // 3:
             piece_positions[piece_idx] = (correct_x, correct_y)
             correctly_placed[piece_idx] = True
+            puzzleclipped_sound.play()
+            global show_praising_image, praising_image_display_time
+            show_praising_image = True
+            praising_image_display_time = pygame.time.get_ticks()
 
     x_offset = 80 
     y_offset = 80 
@@ -109,6 +129,11 @@ def level_four_scene():
     pause_start_time = 0
 
     elapsed_paused_time = 0 
+
+    tutorial_start_time = time.time()
+    tutorial_durations = [5, 5, 5] 
+    total_tutorial_time = sum(tutorial_durations)
+    
 
     # main game loop
     while True:
@@ -130,7 +155,6 @@ def level_four_scene():
                                 break
                     else:
                         snap_piece(selected_piece)
-                        puzzleclipped_sound.play()
                         selected_piece = None
                 if pause_button_rect.collidepoint(event.pos):
                     paused = True
@@ -158,28 +182,41 @@ def level_four_scene():
 
             screen.fill((0, 0, 0))
             for i, (x, y) in enumerate(piece_positions):
-                if correctly_placed[i]:
-                    screen.blit(pieces[i], (x + x_offset, y + y_offset))
-
-            for i, (x, y) in enumerate(piece_positions):
-                if not correctly_placed[i]:
-                    screen.blit(pieces[i], (x + x_offset, y + y_offset))
+                screen.blit(pieces[i], (x + x_offset, y + y_offset))
 
             draw_pause_button(screen, pause_button_rect)
 
-            timer_text = font_timer.render(f"Time: {int(remaining_time)}", True, (255, 255, 255))
-            screen.blit(timer_text, (10, 10))
+            minutes = remaining_time // 60
+            seconds = remaining_time % 60
+            font = pygame.font.Font(None, 36)
+
+            timer_text = font.render(f"Time: {minutes:02}:{seconds:02}", True, (255, 255, 255))
+            screen.blit(timer_text, (320, 30))
+
+            if show_praising_image:
+                screen.blit(praising_image, praising_rect)
+                if current_time - praising_image_display_time >= 3000:
+                    show_praising_image = False
 
             if remaining_time <= 0:
-                cap.release()
-                show_game_over_screen(width, height, screen)
-                pygame.display.flip()
-                pygame.time.wait(2000)
-                pygame.quit()
-                sys.exit()
+                restart_button = show_game_over_screen(width, height, screen)
+                BG_music.stop() 
+                while True:
+                    event = pygame.event.wait()
+                    if event.type == QUIT:
+                        cap.release()
+                        pygame.quit()
+                        sys.exit()
+                    elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                        mouse_pos = pygame.mouse.get_pos()
+                        if restart_button.collidepoint(mouse_pos):
+                            BG_music.stop() 
+                            BG_music = None
+                            level_four_scene()
 
             if all(correctly_placed):
-                next_button, quit_button = show_win_screen(width, height, screen)
+                next_button = show_win_screen(width, height, screen)
+                BG_music.stop() 
                 while True:
                     event = pygame.event.wait()
                     if event.type == QUIT:
@@ -189,11 +226,9 @@ def level_four_scene():
                     elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                         mouse_pos = pygame.mouse.get_pos()
                         if next_button.collidepoint(mouse_pos):
+                            BG_music.stop() 
+                            BG_music = None
                             start_ending()
-                        elif quit_button.collidepoint(mouse_pos):
-                            cap.release()
-                            pygame.quit()
-                            sys.exit()
 
             ret, img = cap.read()
             img = cv2.flip(img, 1)
@@ -231,6 +266,14 @@ def level_four_scene():
 
                 if selected_piece is not None and not correctly_placed[selected_piece]:
                     piece_positions[selected_piece] = (screen_eye_x - piece_width // 2, screen_eye_y - piece_height // 2)
+
+            current_time = time.time()
+            if current_time - tutorial_start_time < total_tutorial_time:
+                elapsed_tutorial_time = current_time - tutorial_start_time
+                for i, duration in enumerate(tutorial_durations):
+                    if elapsed_tutorial_time < sum(tutorial_durations[:i + 1]):
+                        screen.blit(tutorial_images[i], tutorial_image_rect)
+                        break
 
             pygame.display.flip()
 

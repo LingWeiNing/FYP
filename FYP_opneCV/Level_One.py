@@ -45,6 +45,8 @@ def level_one_scene():
 
     item_found_sound = pygame.mixer.Sound("assets/SoundEffect/Bling.mp3")
 
+    BG_music = pygame.mixer.Sound("assets/Music/Shady-Girls.mp3")
+
     # Set up the Pygame window
     width, height = 800, 600
     screen = pygame.display.set_mode((width, height))
@@ -154,7 +156,7 @@ def level_one_scene():
 
     praise_display_time = -5000
 
-    clicked_item = None  # Track which item was clicked
+    clicked_item = None  
     tutorial_image_1_time = 0
     hammer_clicked = False
 
@@ -163,25 +165,24 @@ def level_one_scene():
     pause_start_time = 0
 
     elapsed_paused_time = 0 
+    BG_music.play()
 
+    #main game loop
     while True:
-        mouse_pos = None  # Initialize mouse_pos outside of the event loop
+        mouse_pos = None
+        
         for event in pygame.event.get():
             if event.type == QUIT:
                 cap.release()
                 pygame.quit()
                 sys.exit()
             elif event.type == MOUSEBUTTONDOWN and event.button == 1:
-                # Get the position of the mouse cursor
                 mouse_pos = pygame.mouse.get_pos()
 
-                # Check if the mouse cursor is within the pause button
                 if pause_button_rect.collidepoint(mouse_pos):
                     if not paused:
-                        # Pause the game
                         paused = True
                         pause_start_time = pygame.time.get_ticks()
-                        # Show the pause screen
                         resume_button, quit_button = show_pause_screen(width, height, screen)
                         while paused:
                             for event in pygame.event.get():
@@ -191,7 +192,6 @@ def level_one_scene():
                                     sys.exit()
                                 elif event.type == MOUSEBUTTONDOWN and event.button == 1:
                                     if resume_button.collidepoint(event.pos):
-                                        # Resume the game
                                         paused = False
                                         elapsed_paused_time += pygame.time.get_ticks() - pause_start_time
                                     elif quit_button.collidepoint(event.pos):
@@ -199,7 +199,6 @@ def level_one_scene():
                                         pygame.quit()
                                         sys.exit()
                 else:
-                    # Check if the mouse cursor is within the circular mask
                     if mask_surface.get_rect().collidepoint(mouse_pos):
                         if cx_left is not None and cy_left is not None and cx_right is not None and cy_right is not None:
                             # Calculate the distance between the mouse cursor and the center of the circular mask
@@ -210,18 +209,15 @@ def level_one_scene():
                                 item_rect = globals()[f"{image_path.split('.')[0]}_rect"]
 
                                 if dist_to_center < mask_radius and item_rect.collidepoint(mouse_pos) and items_visible[i]:
-                                    # Toggle the visibility of the item silhouette
                                     items_visible[i] = False
                                     item_found_sound.play()
 
-                                    # Set the clicked item and display the corresponding explanation image
                                     clicked_item = image_path
                                     praise_display_time = pygame.time.get_ticks()
                                     if image_path == "hammer.png":
                                         hammer_clicked = True
                                         tutorial_image_1_time = pygame.time.get_ticks()
-                        else:
-                            print("Player's eye position not detected.")
+                                        
         if not paused:                    
             if mouse_pos is not None and 0 <= mouse_pos[0] <= 800 and 0 <= mouse_pos[1] <= 600:
                 if 50 <= mouse_pos[0] <= 250 and 50 <= mouse_pos[1] <= 250:
@@ -255,7 +251,6 @@ def level_one_scene():
                 cx_left, cy_left = contouring(thresh[:, 0:mid], mid, img)
                 cx_right, cy_right = contouring(thresh[:, mid:], mid, img, True)
 
-            # Only update the transparent black mask surface where the circular mask around the eyes overlaps with it
             if cx_left is not None and cy_left is not None and cx_right is not None and cy_right is not None:
                 # Create a circular mask around the eyes with a gradient effect
                 mask_surface.fill((0, 0, 0, 255))
@@ -265,7 +260,6 @@ def level_one_scene():
 
             screen.blit(background_image, background_rect)
 
-            # Blit visible items
             for i, (visible, image, rect) in enumerate(zip(items_visible, [globals()[f"{item.split('.')[0]}_image"] for item, _, _ in items], [globals()[f"{item.split('.')[0]}_rect"] for item, _, _ in items])):
                 if visible:
                     screen.blit(image, rect)
@@ -273,7 +267,6 @@ def level_one_scene():
             screen.blit(mask_surface, (0, 0))
             screen.blit(itemBox_image, itemBox_rect)
 
-            # Blit item silhouettes
             for i, (silhouette, rect) in enumerate(zip(item_silhouettes, item_silhouettes_rects)):
                 if items_visible[i]:
                     screen.blit(silhouette, rect)
@@ -289,7 +282,6 @@ def level_one_scene():
             text_surface = font.render(f"Time: {minutes:02}:{seconds:02}", True, (255, 255, 255))
             screen.blit(text_surface, (10, 10))
 
-            # Display the explanation image for the clicked item for a short duration
             if clicked_item and pygame.time.get_ticks() - praise_display_time < 5000:
                 screen.blit(explanation_images[clicked_item], explanation_image_rects[clicked_item])
 
@@ -299,11 +291,12 @@ def level_one_scene():
                 elif 3000 <= elapsed_time < 8000:
                     screen.blit(tutorial_images[2], tutorial_image_rect)
             else:
-                if pygame.time.get_ticks() - tutorial_image_1_time < 3000:  # Display tutorial image 1 for 3 seconds
+                if pygame.time.get_ticks() - tutorial_image_1_time < 3000:
                     screen.blit(tutorial_images[0], tutorial_image_rect)
 
             if remaining_time <= 0:
-                restart_button, quit_button = show_game_over_screen(width, height, screen)
+                restart_button = show_game_over_screen(width, height, screen)
+                BG_music.stop()
                 while True:
                     event = pygame.event.wait()
                     if event.type == QUIT:
@@ -313,14 +306,13 @@ def level_one_scene():
                     elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                         mouse_pos = pygame.mouse.get_pos()
                         if restart_button.collidepoint(mouse_pos):
+                            BG_music.stop() 
+                            BG_music = None
                             level_one_scene()
-                        elif quit_button.collidepoint(mouse_pos):
-                            cap.release()
-                            pygame.quit()
-                            sys.exit()
 
             if all(not visible for visible in items_visible):
-                next_button, quit_button = show_win_screen(width, height, screen)
+                next_button= show_win_screen(width, height, screen)
+                BG_music.stop()
                 while True:
                     event = pygame.event.wait()
                     if event.type == QUIT:
@@ -330,11 +322,9 @@ def level_one_scene():
                     elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                         mouse_pos = pygame.mouse.get_pos()
                         if next_button.collidepoint(mouse_pos):
+                            BG_music.stop() 
+                            BG_music = None
                             start_level_two()
-                        elif quit_button.collidepoint(mouse_pos):
-                            cap.release()
-                            pygame.quit()
-                            sys.exit()
 
 
         draw_pause_button(screen, pause_button_rect)

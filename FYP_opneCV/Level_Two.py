@@ -103,6 +103,8 @@ def level_two_scene():
 
     item_found_sound = pygame.mixer.Sound("assets/SoundEffect/Bling.mp3")
 
+    BG_music = pygame.mixer.Sound("assets/Music/Unwelcome-School.mp3")
+
     width, height = 800, 600
     screen = pygame.display.set_mode((width, height))
     pygame.display.set_caption("FYP Game")
@@ -147,13 +149,15 @@ def level_two_scene():
     mask_surface = pygame.Surface((width, height), pygame.SRCALPHA)
 
     start_time = pygame.time.get_ticks()
-    countdown_duration = 1
+    countdown_duration = 100
 
     pause_button_rect = pygame.Rect(width - 100, 10, 80, 40)
     paused = False
     pause_start_time = 0
 
     elapsed_paused_time = 0 
+
+    BG_music.play()
 
     # Main game loop
     while True:
@@ -272,6 +276,7 @@ def level_two_scene():
 
             if remaining_time <= 0:
                 restart_button = show_game_over_screen(width, height, screen)
+                BG_music.stop()
                 while True:
                     event = pygame.event.wait()
                     if event.type == QUIT:
@@ -281,10 +286,13 @@ def level_two_scene():
                     elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                         mouse_pos = pygame.mouse.get_pos()
                         if restart_button.collidepoint(mouse_pos):
+                            BG_music.stop() 
+                            BG_music = None
                             level_two_scene()
 
             if mosquito_counter >= 15:
                 restart_button = show_win_screen(width, height, screen)
+                BG_music.stop()
                 while True:
                     event = pygame.event.wait()
                     if event.type == QUIT:
@@ -294,6 +302,8 @@ def level_two_scene():
                     elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                         mouse_pos = pygame.mouse.get_pos()
                         if restart_button.collidepoint(mouse_pos):
+                            BG_music.stop() 
+                            BG_music = None
                             start_level_three()
 
                             

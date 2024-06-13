@@ -42,6 +42,7 @@ def level_three_scene():
 
     item_found_sound = pygame.mixer.Sound("assets/SoundEffect/Bling.mp3")
     lose_life_sound = pygame.mixer.Sound("assets/SoundEffect/lose_life.mp3")
+    BG_music = pygame.mixer.Sound("assets/Music/207.mp3")
 
     # Set up the Pygame window
     width, height = 800, 600
@@ -93,6 +94,16 @@ def level_three_scene():
     portaltwo_image = pygame.transform.scale(portaltwo_image, (int(portaltwo_image.get_width()/8), int(portaltwo_image.get_height()/8)))
     portaltwo_rect = portaltwo_image.get_rect(center=(width // 2 + 30, height // 2 - 10)) #30, -10
 
+    tutorial_image_paths = [
+        "assets/goodjob/tutorialBunnyMaze1.png",
+        "assets/goodjob/tutorialBunnyMaze2.png",
+        "assets/goodjob/tutorialBunnyMaze3.png"
+    ]
+
+    tutorial_images = [pygame.image.load(path) for path in tutorial_image_paths]
+    tutorial_images = [pygame.transform.scale(image, (int(image.get_width()), int(image.get_height()))) for image in tutorial_images]
+    tutorial_image_rect = tutorial_images[0].get_rect(center=(width // 2 - 270, height // 2 + 60))
+
     initial_key_position = key_position
     initial_keyTwo_position = keyTwo_position
 
@@ -135,7 +146,6 @@ def level_three_scene():
     offset_x_key, offset_y_key = 0, 0
     offset_x_keyTwo, offset_y_keyTwo = 0, 0
 
-
     lives = 3
     font = pygame.font.Font(None, 36)
 
@@ -159,6 +169,12 @@ def level_three_scene():
     show_good_job = False
     good_job_start_time = 0
     good_job_display_duration = 2
+
+    tutorial_start_time = time.time()
+    tutorial_durations = [3, 5, 3]  # Durations in seconds for each tutorial image
+    total_tutorial_time = sum(tutorial_durations)
+
+    BG_music.play()
 
     while True:
         screen.fill((0, 0, 0))
@@ -292,8 +308,20 @@ def level_three_scene():
                 last_keyTwo_collision = current_time 
                 red_flash_alpha = 150 
                 if lives <= 0:
-                    show_game_over_screen(width, height, screen)
-                    return 
+                    BG_music.stop()
+                    restart_button = show_game_over_screen(width, height, screen)
+                    while True:
+                        event = pygame.event.wait()
+                        if event.type == QUIT:
+                            cap.release()
+                            pygame.quit()
+                            sys.exit()
+                        elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                            mouse_pos = pygame.mouse.get_pos()
+                            if restart_button.collidepoint(mouse_pos):
+                                BG_music.stop() 
+                                BG_music = None
+                                level_three_scene()
 
         if key_visible and (current_time - last_key_collision > cooldown_time):
             key_mask = pygame.mask.from_surface(key_image)
@@ -304,8 +332,20 @@ def level_three_scene():
                 last_key_collision = current_time
                 red_flash_alpha = 150 
                 if lives <= 0:
-                    show_game_over_screen(width, height, screen)
-                    return 
+                    BG_music.stop()
+                    restart_button = show_game_over_screen(width, height, screen)
+                    while True:
+                        event = pygame.event.wait()
+                        if event.type == QUIT:
+                            cap.release()
+                            pygame.quit()
+                            sys.exit()
+                        elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                            mouse_pos = pygame.mouse.get_pos()
+                            if restart_button.collidepoint(mouse_pos):
+                                BG_music.stop() 
+                                BG_music = None
+                                level_three_scene()
 
         if key_rect.colliderect(portalone_rect) and key_visible:
             key_visible = False
@@ -345,9 +385,21 @@ def level_three_scene():
             win = True
 
         if win:
-            show_win_screen(width, height, screen)
-            return
-
+            restart_button = show_win_screen(width, height, screen)
+            BG_music.stop()
+            while True:
+                event = pygame.event.wait()
+                if event.type == QUIT:
+                    cap.release()
+                    pygame.quit()
+                    sys.exit()
+                elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                    mouse_pos = pygame.mouse.get_pos()
+                    if restart_button.collidepoint(mouse_pos):
+                        BG_music.stop() 
+                        BG_music = None
+                        start_level_four()
+                        
         # Blit
         screen.blit(characterBG_image, characterBG_rect)
         screen.blit(background_image, background_rect)
@@ -379,6 +431,14 @@ def level_three_scene():
             show_good_job = False
 
         draw_pause_button(screen, pause_button_rect)
+
+        current_time = time.time()
+        if current_time - tutorial_start_time < total_tutorial_time:
+            elapsed_tutorial_time = current_time - tutorial_start_time
+            for i, duration in enumerate(tutorial_durations):
+                if elapsed_tutorial_time < sum(tutorial_durations[:i + 1]):
+                    screen.blit(tutorial_images[i], tutorial_image_rect)
+                    break
 
         pygame.display.flip()
 

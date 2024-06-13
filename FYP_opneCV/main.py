@@ -1,13 +1,15 @@
 import pygame
 import sys
 from pygame.locals import *
-from LevelSelection import start_level_four
+import pygame.mixer
+from LevelSelection import start_level_one
 
 pygame.init()
+pygame.mixer.init()
 
 width, height = 800, 600
 screen = pygame.display.set_mode((width, height))
-pygame.display.set_caption("Main Menu")
+pygame.display.set_caption("Eye See You")
 
 def render_dialogue_text(text, font, maxwidth):
     words = text.split(" ")
@@ -143,6 +145,9 @@ def main_menu():
         pygame.transform.scale(pygame.image.load("assets/Comics/comic1_7.png"), (width, height)),
         pygame.transform.scale(pygame.image.load("assets/Comics/comic1_8.png"), (width, height))
     ]
+
+    BG_music = pygame.mixer.Sound("assets/Music/MX-Adventure.mp3")
+    BG_music.play()
     
     current_page = 0
     showing_story = False
@@ -173,7 +178,9 @@ def main_menu():
                 if showing_story:
                     current_page += 1
                     if current_page >= len(story_images):
-                        start_level_four()
+                        BG_music.stop() 
+                        BG_music = None
+                        start_level_one()
                         return 
                 else:
                     action = start_button.handle_event(event)
@@ -190,4 +197,5 @@ def main_menu():
 
         pygame.display.flip()
 
-main_menu()
+if __name__ == "__main__":
+    main_menu()

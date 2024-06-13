@@ -18,9 +18,9 @@ def show_game_over_screen(width, height, screen):
 
     # Restart button
     restart_button = pygame.Rect(width // 2 - 100, height // 2 + 150, 200, 50)
-    pygame.draw.rect(screen, (0, 0, 0), restart_button)
+    pygame.draw.rect(screen, (255, 255, 255), restart_button)
     font_restart = pygame.font.Font(None, 36)
-    text_restart = font_restart.render("Restart", True, (255, 255, 255))
+    text_restart = font_restart.render("Restart", True, (0, 0, 0))
     screen.blit(text_restart, (width // 2 - text_restart.get_width() // 2, height // 2 + 160))
 
 
@@ -40,9 +40,9 @@ def show_win_screen(width, height, screen):
 
     # Next Level button
     next_button = pygame.Rect(width // 2 - 100, height // 2 + 150, 200, 50)
-    pygame.draw.rect(screen, (0, 0, 0), next_button)
+    pygame.draw.rect(screen, (255, 255, 255), next_button)
     font_next = pygame.font.Font(None, 36)
-    text_next = font_next.render("Next Level", True, (255, 255, 255))
+    text_next = font_next.render("Next Level", True, (0, 0, 0))
     screen.blit(text_next, (width // 2 - text_next.get_width() // 2, height // 2 + 160))
 
     pygame.display.flip()
@@ -59,16 +59,16 @@ def show_pause_screen(width, height, screen):
 
     # Resume button
     resume_button = pygame.Rect(width // 2 - 100, height // 2, 200, 50)
-    pygame.draw.rect(screen, (0, 0, 0), resume_button)
+    pygame.draw.rect(screen, (255, 255, 255), resume_button)
     font_resume = pygame.font.Font(None, 36)
-    text_resume = font_resume.render("Resume", True, (255, 255, 255))
+    text_resume = font_resume.render("Resume", True, (0, 0, 0))
     screen.blit(text_resume, (width // 2 - text_resume.get_width() // 2, height // 2 + 10))
 
     # Quit button
     quit_button = pygame.Rect(width // 2 - 100, height // 2 + 70, 200, 50)
-    pygame.draw.rect(screen, (0, 0, 0), quit_button)
+    pygame.draw.rect(screen, (255, 255, 255), quit_button)
     font_quit = pygame.font.Font(None, 36)
-    text_quit = font_quit.render("Quit Level", True, (255, 255, 255))
+    text_quit = font_quit.render("Quit Level", True, (0, 0, 0))
     screen.blit(text_quit, (width // 2 - text_quit.get_width() // 2, height // 2 + 80))
 
     pygame.display.flip()
@@ -79,4 +79,4 @@ def draw_pause_button(screen, pause_button_rect):
     pygame.draw.rect(screen, (255, 255, 255), pause_button_rect)
     font_pause = pygame.font.Font(None, 36)
     text_pause = font_pause.render("Pause", True, (0, 0, 0))
-    screen.blit(text_pause, (pause_button_rect.x + 10, pause_button_rect.y + 10))
+    screen.blit(text_pause, (pause_button_rect.x + 5, pause_button_rect.y + 10))
