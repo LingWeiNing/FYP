@@ -308,6 +308,7 @@ def level_one_scene():
                         if restart_button.collidepoint(mouse_pos):
                             BG_music.stop() 
                             BG_music = None
+                            pygame.mixer.music.stop()
                             level_one_scene()
 
             if all(not visible for visible in items_visible):
@@ -324,6 +325,7 @@ def level_one_scene():
                         if next_button.collidepoint(mouse_pos):
                             BG_music.stop() 
                             BG_music = None
+                            pygame.mixer.music.stop()
                             start_level_two()
 
 

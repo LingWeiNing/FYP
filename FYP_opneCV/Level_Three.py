@@ -321,6 +321,7 @@ def level_three_scene():
                             if restart_button.collidepoint(mouse_pos):
                                 BG_music.stop() 
                                 BG_music = None
+                                pygame.mixer.music.stop()
                                 level_three_scene()
 
         if key_visible and (current_time - last_key_collision > cooldown_time):
@@ -345,6 +346,7 @@ def level_three_scene():
                             if restart_button.collidepoint(mouse_pos):
                                 BG_music.stop() 
                                 BG_music = None
+                                pygame.mixer.music.stop()
                                 level_three_scene()
 
         if key_rect.colliderect(portalone_rect) and key_visible:
@@ -398,6 +400,7 @@ def level_three_scene():
                     if restart_button.collidepoint(mouse_pos):
                         BG_music.stop() 
                         BG_music = None
+                        pygame.mixer.music.stop()
                         start_level_four()
                         
         # Blit

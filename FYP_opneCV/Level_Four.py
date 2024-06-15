@@ -62,7 +62,7 @@ def level_four_scene():
     pygame.display.set_caption("FYP Game")
 
     puzzle_image = pygame.image.load("assets/Bg/museum.jpg")
-    rows, cols = 3, 4
+    rows, cols = 2, 2 #3,4
     pieces, piece_width, piece_height = cut_image(puzzle_image, rows, cols)
 
     puzzleclipped_sound = pygame.mixer.Sound("assets/SoundEffect/Bling.mp3")
@@ -212,6 +212,7 @@ def level_four_scene():
                         if restart_button.collidepoint(mouse_pos):
                             BG_music.stop() 
                             BG_music = None
+                            pygame.mixer.music.stop()
                             level_four_scene()
 
             if all(correctly_placed):
@@ -228,6 +229,7 @@ def level_four_scene():
                         if next_button.collidepoint(mouse_pos):
                             BG_music.stop() 
                             BG_music = None
+                            pygame.mixer.music.stop()
                             start_ending()
 
             ret, img = cap.read()

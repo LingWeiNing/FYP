@@ -10,7 +10,9 @@ from buttonScene import show_game_over_screen, show_win_screen, show_pause_scree
 from LevelSelection import start_level_three
 
 class Mosquito(pygame.sprite.Sprite):
-    def __init__(self, images, x, y, speed, scale_factor):
+    taunting_mosquito = None
+
+    def __init__(self, images, taunt_images, x, y, speed, scale_factor):
         super().__init__()
         self.original_images = [pygame.transform.scale(pygame.image.load(image), scale_factor) for image in images]
         self.images = self.original_images.copy()
@@ -24,6 +26,17 @@ class Mosquito(pygame.sprite.Sprite):
         self.prev_x = x
         self.prev_y = y
         self.visible = True
+
+        # Taunt related attributes
+        self.taunt_images = [pygame.image.load(image) for image in taunt_images]
+        self.show_taunt = False
+        self.taunt_image = None
+        self.taunt_start_time = 0
+        self.taunt_duration = 3000
+        self.next_taunt_time = pygame.time.get_ticks() + random.randint(5000, 8000) 
+
+        self.cooldown_duration = 8000 
+        self.last_taunt_time = 0
 
     def update(self):
         self.frame_count += 1
@@ -59,15 +72,39 @@ class Mosquito(pygame.sprite.Sprite):
         self.prev_x = self.rect.x
         self.prev_y = self.rect.y
 
-def spawn_mosquitoes(num_mosquitoes, images, scale_factor):
+        # Taunt logic
+        current_time = pygame.time.get_ticks()
+        if self.show_taunt and current_time - self.taunt_start_time > self.taunt_duration:
+            self.show_taunt = False
+            Mosquito.taunting_mosquito = None
+            self.last_taunt_time = current_time
+            self.next_taunt_time = current_time + random.randint(5000, 8000)
+            print(f"Taunt ended. Next taunt time: {self.next_taunt_time}")
+
+        if not self.show_taunt and current_time >= self.next_taunt_time:
+            if current_time - self.last_taunt_time >= self.cooldown_duration and Mosquito.taunting_mosquito is None:
+                self.show_taunt = True
+                self.taunt_image = random.choice(self.taunt_images)
+                self.taunt_start_time = current_time
+                Mosquito.taunting_mosquito = self
+                print(f"Taunt started. Taunt duration: {self.taunt_duration}")
+
+    def display_taunt(self, screen):
+        if self.show_taunt and self.taunt_image:
+            taunt_rect = self.taunt_image.get_rect(center=(self.rect.centerx + 40, self.rect.top - 20))  # Adjust the Y position to be above the mosquito
+            screen.blit(self.taunt_image, taunt_rect)
+
+
+def spawn_mosquitoes(num_mosquitoes, images, taunt_images, scale_factor):
     mosquitoes = pygame.sprite.Group()
     for _ in range(num_mosquitoes):
         x = random.randint(0, 800)
         y = random.randint(0, 600)
         speed = random.uniform(1, 3)
-        mosquito = Mosquito(images, x, y, speed, scale_factor)
+        mosquito = Mosquito(images, taunt_images, x, y, speed, scale_factor)
         mosquitoes.add(mosquito)
     return mosquitoes
+
 
 def shape_to_np(shape, dtype="int"):
     coords = np.zeros((68, 2), dtype=dtype)
@@ -130,16 +167,22 @@ def level_two_scene():
 
     mosquito_images = [
         "assets/Items/mosquito1.png",
-        "assets/Items/mosquito2.png",
+        "assets/Items/mosquito2.png"
     ]
 
-    mosquitoes = spawn_mosquitoes(5, mosquito_images, (100, 100))
+    mosquitoTaunt_images = [
+        "assets/Dialogue/mosquitoTaunt1.png",
+        "assets/Dialogue/mosquitoTaunt2.png",
+        "assets/Dialogue/mosquitoTaunt3.png",
+        "assets/Dialogue/mosquitoTaunt4.png"
+    ]
+
+    mosquitoes = spawn_mosquitoes(5, mosquito_images, mosquitoTaunt_images, (100, 100))
 
     mosquito_counter = 0
 
     praising_image = pygame.image.load("assets/goodjob/GoodJobChief.png")
     praising_rect = praising_image.get_rect(center=(600, 500))
-
 
     show_praising_image = False
     praising_image_display_time = 0
@@ -180,7 +223,7 @@ def level_two_scene():
                                     mosquitoes.remove(mosquito)
                                     mosquito_counter += 1
                                     item_found_sound.play()
-                                    new_mosquito = Mosquito(mosquito_images, random.randint(0, 800), random.randint(0, 600), random.uniform(1, 3), (100, 100))
+                                    new_mosquito = Mosquito(mosquito_images, mosquitoTaunt_images, random.randint(0, 800), random.randint(0, 600), random.uniform(1, 3), (100, 100))
                                     mosquitoes.add(new_mosquito)
                                     show_praising_image = True
                                     praising_image_display_time = pygame.time.get_ticks()
@@ -188,7 +231,6 @@ def level_two_scene():
             elif event.type == KEYDOWN:
                 if event.key == K_ESCAPE:
                     if not paused:
-                        # Pause the game
                         paused = True
                         pause_start_time = pygame.time.get_ticks()
         
@@ -239,7 +281,6 @@ def level_two_scene():
                 cx_right, cy_right = contouring(thresh[:, mid:], mid, img, True)
 
             if cx_left is not None and cy_left is not None and cx_right is not None and cy_right is not None:
-                # Create a circular mask around the eyes with a gradient effect
                 mask_surface.fill((0, 0, 0, 255))
                 mask_radius = 60
                 pygame.draw.circle(mask_surface, (0, 0, 0, 128), (cx_right, cy_left), mask_radius)
@@ -250,12 +291,14 @@ def level_two_scene():
             mosquitoes.update()
             mosquitoes.draw(screen)
 
+            
+
             screen.blit(mask_surface, (0, 0))
 
             screen.blit(top_image, top_rect)
 
             font = pygame.font.Font(None, 36)
-            counter_text = font.render(f'Mosquitoes removed: {mosquito_counter} /15', True, (255, 255, 255))
+            counter_text = font.render(f'Mosquitoes removed: {mosquito_counter} /25', True, (255, 255, 255))
             screen.blit(counter_text, (230, 10))
 
             current_time = pygame.time.get_ticks()
@@ -274,6 +317,10 @@ def level_two_scene():
                 if current_time - praising_image_display_time >= 3000:
                     show_praising_image = False
 
+            for mosquito in mosquitoes:
+                mosquito.display_taunt(screen)
+                
+
             if remaining_time <= 0:
                 restart_button = show_game_over_screen(width, height, screen)
                 BG_music.stop()
@@ -288,9 +335,10 @@ def level_two_scene():
                         if restart_button.collidepoint(mouse_pos):
                             BG_music.stop() 
                             BG_music = None
+                            pygame.mixer.music.stop()
                             level_two_scene()
 
-            if mosquito_counter >= 15:
+            if mosquito_counter >= 3:
                 restart_button = show_win_screen(width, height, screen)
                 BG_music.stop()
                 while True:
@@ -304,7 +352,9 @@ def level_two_scene():
                         if restart_button.collidepoint(mouse_pos):
                             BG_music.stop() 
                             BG_music = None
+                            pygame.mixer.music.stop()
                             start_level_three()
+        
 
                             
         draw_pause_button(screen, pause_button_rect)
