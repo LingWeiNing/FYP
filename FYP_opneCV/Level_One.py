@@ -35,7 +35,7 @@ def contouring(thresh, mid, img, right=False):
         return None, None
 
 def display_explanation(screen, explanation_image):
-    screen.blit(explanation_image, (0, 0))  # Display detective thinking image
+    screen.blit(explanation_image, (0, 0))
     pygame.display.flip()
 
 def level_one_scene():
@@ -67,12 +67,10 @@ def level_one_scene():
         "tape.png": "assets/goodjob/detectiveThinking_tape.png"
     }
 
-    # Load tutorial images
     tutorial_images = [pygame.image.load(path) for path in tutorial_image_paths]
     tutorial_images = [pygame.transform.scale(image, (int(image.get_width()), int(image.get_height()))) for image in tutorial_images]
     tutorial_image_rect = tutorial_images[0].get_rect(center=(width // 2 - 270, height // 2 + 25))
 
-    # Load background image and set its rectangle
     background_image = pygame.image.load("assets/Bg/Background.png")
     background_image = pygame.transform.scale(background_image, (int(background_image.get_width() * 1.2), int(background_image.get_height() * 1.2)))
     background_rect = background_image.get_rect()
@@ -83,9 +81,8 @@ def level_one_scene():
     itemBox_rect = itemBox_image.get_rect()
     itemBox_rect.topleft = (0, 470)
 
-    # Define image paths and positions
     items = [
-        ("globe.png", (600, 400), 0.8),
+        ("globe.png", (550, 400), 0.8),
         ("dumbells.png", (500, 320), 0.5),
         ("laptop.png", (150, 270), 1.0),
         ("socks.png", (220, 120), 0.1),
@@ -120,37 +117,31 @@ def level_one_scene():
         grayscale_image.blit(image, (0, 0), special_flags=pygame.BLEND_RGBA_MULT)
         item_silhouettes.append(grayscale_image)
 
-    # Create rectangles for item silhouettes
     item_silhouettes_rects = []
     for i, item in enumerate(items):
         image_path, position, _ = item
         silhouette_rect = item_silhouettes[i].get_rect(center=(itemBox_rect.left + 100 + i * 100, itemBox_rect.top + 50))
         item_silhouettes_rects.append(silhouette_rect)
 
-    # Boolean variables to track if the items are visible
     items_visible = [True] * len(items)
 
     explanation_images = {path: pygame.image.load(explanation_image_paths[path]) for path in explanation_image_paths}
     explanation_images = {path: pygame.transform.scale(explanation_images[path], (int(explanation_images[path].get_width()), int(explanation_images[path].get_height()))) for path in explanation_images}
     explanation_image_rects = {path: explanation_images[path].get_rect(center=(width // 2 + 210, height // 2 + 35)) for path in explanation_images}
 
-    # Initialize face detector and shape predictor
     detector = dlib.get_frontal_face_detector()
     predictor = dlib.shape_predictor('shape_predictor/shape_predictor_68_face_landmarks.dat')
     left = [36, 37, 38, 39, 40, 41]
     right = [42, 43, 44, 45, 46, 47]
 
-    # Initialize the webcam
     cap = cv2.VideoCapture(0)
 
-    # Set up Pygame clock
     clock = pygame.time.Clock()
 
     threshold = 80
 
     mask_surface = pygame.Surface((width, height), pygame.SRCALPHA)
 
-    # Countdown timer setup
     start_time = pygame.time.get_ticks()
     countdown_duration = 90
 
@@ -167,7 +158,8 @@ def level_one_scene():
     elapsed_paused_time = 0 
     BG_music.play()
 
-    #main game loop
+    cx_left, cy_left, cx_right, cy_right = None, None, None, None
+
     while True:
         mouse_pos = None
         

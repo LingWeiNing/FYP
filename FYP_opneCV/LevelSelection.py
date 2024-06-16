@@ -20,7 +20,7 @@ def render_dialogue_text(text, font, maxwidth):
 
 def render_dialogue(screen, dialogue_texts, dialogue_backgrounds, dialogue_progress, maxwidth, x, y):
     if dialogue_progress >= 0 and dialogue_progress < len(dialogue_texts):
-        screen.blit(dialogue_backgrounds[dialogue_progress], (0, 0))  # Draw background image for dialogue
+        screen.blit(dialogue_backgrounds[dialogue_progress], (0, 0))
         font = pygame.font.SysFont(None, 30)
         lines = render_dialogue_text(dialogue_texts[dialogue_progress], font, maxwidth)
         for line in lines:

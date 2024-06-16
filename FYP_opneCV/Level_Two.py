@@ -27,7 +27,6 @@ class Mosquito(pygame.sprite.Sprite):
         self.prev_y = y
         self.visible = True
 
-        # Taunt related attributes
         self.taunt_images = [pygame.image.load(image) for image in taunt_images]
         self.show_taunt = False
         self.taunt_image = None
@@ -202,6 +201,8 @@ def level_two_scene():
 
     BG_music.play()
 
+    cx_left, cy_left, cx_right, cy_right = None, None, None, None
+
     # Main game loop
     while True:
         for event in pygame.event.get():
@@ -298,7 +299,7 @@ def level_two_scene():
             screen.blit(top_image, top_rect)
 
             font = pygame.font.Font(None, 36)
-            counter_text = font.render(f'Mosquitoes removed: {mosquito_counter} /25', True, (255, 255, 255))
+            counter_text = font.render(f'Mosquitoes removed: {mosquito_counter} /20', True, (255, 255, 255))
             screen.blit(counter_text, (230, 10))
 
             current_time = pygame.time.get_ticks()
@@ -338,7 +339,7 @@ def level_two_scene():
                             pygame.mixer.music.stop()
                             level_two_scene()
 
-            if mosquito_counter >= 3:
+            if mosquito_counter >= 20:
                 restart_button = show_win_screen(width, height, screen)
                 BG_music.stop()
                 while True:

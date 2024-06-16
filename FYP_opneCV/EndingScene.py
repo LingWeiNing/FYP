@@ -2,7 +2,7 @@ import pygame
 import sys
 import pygame.mixer
 from LevelSelection import start_level_one
-from main import main_menu
+from EyeSeeYou import main_menu
 
 def render_dialogue_text(text, font, maxwidth):
     words = text.split(" ")
@@ -20,7 +20,7 @@ def render_dialogue_text(text, font, maxwidth):
 
 def render_dialogue(screen, dialogue_texts, dialogue_backgrounds, dialogue_progress, maxwidth, x, y):
     if dialogue_progress >= 0 and dialogue_progress < len(dialogue_texts):
-        screen.blit(dialogue_backgrounds[dialogue_progress], (0, 0))  # Draw background image for dialogue
+        screen.blit(dialogue_backgrounds[dialogue_progress], (0, 0)) 
         font = pygame.font.SysFont(None, 30)
         lines = render_dialogue_text(dialogue_texts[dialogue_progress], font, maxwidth)
         for line in lines:
@@ -94,13 +94,13 @@ def start_ending():
                     if current_page >= len(story_images):
                         BG_music.stop() 
                         BG_music = None
-                        main_menu()  # Return to main menu after the last comic image
+                        main_menu()  
                         return
                 else:
                     dialogue_progress += 1
                     if dialogue_progress >= len(dialogue_texts):
                         showing_story = True
-                        current_page = 0  # Reset current_page to start from the first story image
+                        current_page = 0 
 
         pygame.display.flip()
 

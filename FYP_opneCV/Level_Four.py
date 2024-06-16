@@ -133,8 +133,9 @@ def level_four_scene():
     tutorial_start_time = time.time()
     tutorial_durations = [5, 5, 5] 
     total_tutorial_time = sum(tutorial_durations)
-    
 
+    cx_left, cy_left, cx_right, cy_right = None, None, None, None
+    
     # main game loop
     while True:
         for event in pygame.event.get():

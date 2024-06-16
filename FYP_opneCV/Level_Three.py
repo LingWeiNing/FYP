@@ -47,13 +47,10 @@ def level_three_scene():
     item_found_sound = pygame.mixer.Sound("assets/SoundEffect/Bling.mp3")
     lose_life_sound = pygame.mixer.Sound("assets/SoundEffect/lose_life.mp3")
 
-
-    # Set up the Pygame window
     width, height = 800, 600
     screen = pygame.display.set_mode((width, height))
     pygame.display.set_caption("FYP Game")
 
-    # Load background image and set its rectangle
     background_image = pygame.image.load("assets/Bg/maze1.png").convert_alpha()  # Load with alpha channel
     background_image = pygame.transform.scale(background_image, (int(background_image.get_width()), int(background_image.get_height())))
     background_rect = background_image.get_rect()
@@ -75,7 +72,6 @@ def level_three_scene():
     top_rect = top_image.get_rect()
     top_rect.center = (width // 2, 40)
 
-    # Load key images and set their rectangles
     key_image = pygame.image.load("assets/Items/key.png")
     key_image = pygame.transform.scale(key_image, (int(key_image.get_width()), int(key_image.get_height())))
     key_rect = key_image.get_rect()
@@ -101,7 +97,7 @@ def level_three_scene():
 
     fading_portalone = False
     fading_portaltwo = False
-    portal_fade_speed = 5 
+    portal_fade_speed = 15
     portalone_alpha = 255
     portaltwo_alpha = 255
     win = False
@@ -127,7 +123,6 @@ def level_three_scene():
     red_flash.fill((255, 0, 0))
     red_flash_alpha = 0
 
-    # Set up Pygame clock
     clock = pygame.time.Clock()
 
     threshold = 80
@@ -158,7 +153,7 @@ def level_three_scene():
     good_job_display_duration = 2
 
     tutorial_start_time = time.time()
-    tutorial_durations = [3, 5, 3]  # Durations in seconds for each tutorial image
+    tutorial_durations = [5, 5, 3]
     total_tutorial_time = sum(tutorial_durations)
 
     
@@ -362,13 +357,11 @@ def level_three_two_scene(BG_music):
     item_found_sound = pygame.mixer.Sound("assets/SoundEffect/Bling.mp3")
     lose_life_sound = pygame.mixer.Sound("assets/SoundEffect/lose_life.mp3")
 
-    # Set up the Pygame window
     width, height = 800, 600
     screen = pygame.display.set_mode((width, height))
     pygame.display.set_caption("FYP Game")
 
-    # Load background image and set its rectangle
-    background_image = pygame.image.load("assets/Bg/maze2.png").convert_alpha()  # Load with alpha channel
+    background_image = pygame.image.load("assets/Bg/maze2.png").convert_alpha() 
     background_image = pygame.transform.scale(background_image, (int(background_image.get_width()), int(background_image.get_height())))
     background_rect = background_image.get_rect()
     background_rect.center = (width // 2, height // 2)
@@ -389,7 +382,6 @@ def level_three_two_scene(BG_music):
     top_rect = top_image.get_rect()
     top_rect.center = (width // 2, 40)
 
-    # Load key images and set their rectangles
     key_image = pygame.image.load("assets/Items/key.png")
     key_image = pygame.transform.scale(key_image, (int(key_image.get_width()), int(key_image.get_height())))
     key_rect = key_image.get_rect()
@@ -399,10 +391,10 @@ def level_three_two_scene(BG_music):
 
     portalone_image = pygame.image.load("assets/Portal/portalOne/portalOne.png").convert_alpha()
     portalone_image = pygame.transform.scale(portalone_image, (int(portalone_image.get_width()/5), int(portalone_image.get_height()/5)))
-    portalone_rect = portalone_image.get_rect(center=(width // 2 + 185, height // 2 + 140)) #185, 140
+    portalone_rect = portalone_image.get_rect(center=(width // 2 + 215, height // 2 - 30)) #185, 140
 
     fading_portalone = False
-    portal_fade_speed = 5 
+    portal_fade_speed = 15
     portalone_alpha = 255
     win = False
 
@@ -426,7 +418,6 @@ def level_three_two_scene(BG_music):
     red_flash.fill((255, 0, 0))
     red_flash_alpha = 0
 
-    # Set up Pygame clock
     clock = pygame.time.Clock()
 
     threshold = 80
@@ -459,6 +450,7 @@ def level_three_two_scene(BG_music):
 
     bg_music_paused = False
 
+    cx_left, cy_left, cx_right, cy_right = None, None, None, None
 
     while True:
         screen.fill((0, 0, 0))
@@ -505,7 +497,6 @@ def level_three_two_scene(BG_music):
 
         ret, img = cap.read()
 
-        # Horizontally flip the webcam feed
         img = cv2.flip(img, 1)
 
         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
@@ -549,7 +540,6 @@ def level_three_two_scene(BG_music):
                 eye_on_key_time += clock.get_time() / 1000.0 
                 if eye_on_key_time >= eye_on_key_threshold:
                     dragging_key = True
-                    #item_found_sound.play()
                     offset_x_key = key_rect.x - screen_eye_x
                     offset_y_key = key_rect.y - screen_eye_y
             else:
@@ -613,7 +603,6 @@ def level_three_two_scene(BG_music):
         if win:
             level_three_three_scene(BG_music)
              
-        # Blit
         screen.blit(background_image, background_rect)
         screen.blit(characterBG_image, characterBG_rect)
         screen.blit(top_image, top_rect)
@@ -652,12 +641,10 @@ def level_three_three_scene(BG_music):
     item_found_sound = pygame.mixer.Sound("assets/SoundEffect/Bling.mp3")
     lose_life_sound = pygame.mixer.Sound("assets/SoundEffect/lose_life.mp3")
 
-    # Set up the Pygame window
     width, height = 800, 600
     screen = pygame.display.set_mode((width, height))
     pygame.display.set_caption("FYP Game")
 
-    # Load background image and set its rectangle
     background_image = pygame.image.load("assets/Bg/maze3.png").convert_alpha()  # Load with alpha channel
     background_image = pygame.transform.scale(background_image, (int(background_image.get_width()), int(background_image.get_height())))
     background_rect = background_image.get_rect()
@@ -679,7 +666,6 @@ def level_three_three_scene(BG_music):
     top_rect = top_image.get_rect()
     top_rect.center = (width // 2, 40)
 
-    # Load key images and set their rectangles
     key_image = pygame.image.load("assets/Items/key.png")
     key_image = pygame.transform.scale(key_image, (int(key_image.get_width()), int(key_image.get_height())))
     key_rect = key_image.get_rect()
@@ -693,7 +679,7 @@ def level_three_three_scene(BG_music):
 
 
     fading_portalone = False
-    portal_fade_speed = 5 
+    portal_fade_speed = 15 
     portalone_alpha = 255
     win = False
 
@@ -717,7 +703,6 @@ def level_three_three_scene(BG_music):
     red_flash.fill((255, 0, 0))
     red_flash_alpha = 0
 
-    # Set up Pygame clock
     clock = pygame.time.Clock()
 
     threshold = 80
@@ -747,10 +732,6 @@ def level_three_three_scene(BG_music):
     show_good_job = False
     good_job_start_time = 0
     good_job_display_duration = 2
-
-    tutorial_start_time = time.time()
-    tutorial_durations = [3, 5, 3]  # Durations in seconds for each tutorial image
-    total_tutorial_time = sum(tutorial_durations)
 
     while True:
         screen.fill((0, 0, 0))
