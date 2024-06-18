@@ -7,36 +7,25 @@ import sys
 import pygame.mixer
 from buttonScene import show_game_over_screen, show_win_screen, show_pause_screen, draw_pause_button
 from LevelSelection import start_level_two
-
-def shape_to_np(shape, dtype="int"):
-    coords = np.zeros((68, 2), dtype=dtype)
-    for i in range(0, 68):
-        coords[i] = (shape.part(i).x, shape.part(i).y)
-    return coords
-
-def eye_on_mask(mask, side, shape):
-    points = [shape[i] for i in side]
-    points = np.array(points, dtype=np.int32)
-    mask = cv2.fillConvexPoly(mask, points, 255)
-    return mask
-
-def contouring(thresh, mid, img, right=False):
-    cnts, _ = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
-    try:
-        cnt = max(cnts, key=cv2.contourArea)
-        M = cv2.moments(cnt)
-        cx = int(M['m10'] / M['m00'])
-        cy = int(M['m01'] / M['m00'])
-        if right:
-            cx += mid
-        cv2.circle(img, (cx, cy), 4, (0, 0, 255), 2)
-        return cx, cy
-    except:
-        return None, None
+from eye_detection import detect_eyes
 
 def display_explanation(screen, explanation_image):
     screen.blit(explanation_image, (0, 0))
     pygame.display.flip()
+
+def draw_slider(screen, pos, size, value, min_val, max_val):
+    x, y = pos
+    width, height = size
+    slider_rect = pygame.Rect(x, y, width, height)
+    handle_pos = ((value - min_val) / (max_val - min_val)) * width + x
+    handle_rect = pygame.Rect(handle_pos - 5, y - 10, 10, height + 20)
+
+    pygame.draw.rect(screen, (180, 180, 180), slider_rect)
+    pygame.draw.rect(screen, (50, 50, 50), handle_rect)
+    pygame.draw.line(screen, (0, 0, 0), (x, y + height // 2), (x + width, y + height // 2), 2)
+    pygame.draw.circle(screen, (0, 0, 0), (int(handle_pos), y + height // 2), 10)
+
+    return slider_rect, handle_rect
 
 def level_one_scene():
     # Initialize Pygame
@@ -95,7 +84,7 @@ def level_one_scene():
     for item in items:
         image_path, position, scale = item
         image = pygame.image.load(fr"assets/Items/{image_path}")
-        image = pygame.transform.scale(image, (int(image.get_width() * scale), int(image.get_height() * scale)))
+        image = pygame.transform.scale(image, (int(image.get_width() * scale), (int(image.get_height() * scale))))
         image_rect = image.get_rect(center=position)
         globals()[f"{image_path.split('.')[0]}_image"] = image
         globals()[f"{image_path.split('.')[0]}_rect"] = image_rect
@@ -131,19 +120,17 @@ def level_one_scene():
 
     detector = dlib.get_frontal_face_detector()
     predictor = dlib.shape_predictor('shape_predictor/shape_predictor_68_face_landmarks.dat')
-    left = [36, 37, 38, 39, 40, 41]
-    right = [42, 43, 44, 45, 46, 47]
 
     cap = cv2.VideoCapture(0)
 
     clock = pygame.time.Clock()
 
-    threshold = 80
+    threshold = 30
 
     mask_surface = pygame.Surface((width, height), pygame.SRCALPHA)
 
     start_time = pygame.time.get_ticks()
-    countdown_duration = 90
+    countdown_duration = 120
 
     praise_display_time = -5000
 
@@ -160,8 +147,16 @@ def level_one_scene():
 
     cx_left, cy_left, cx_right, cy_right = None, None, None, None
 
+    font = pygame.font.Font(None, 36)
+
+    slider_pos = (300, 50)
+    slider_size = (200, 20)
+    slider_min_val = 0
+    slider_max_val = 255
+
     while True:
         mouse_pos = None
+        mouse_click = False
         
         for event in pygame.event.get():
             if event.type == QUIT:
@@ -170,6 +165,7 @@ def level_one_scene():
                 sys.exit()
             elif event.type == MOUSEBUTTONDOWN and event.button == 1:
                 mouse_pos = pygame.mouse.get_pos()
+                mouse_click = True
 
                 if pause_button_rect.collidepoint(mouse_pos):
                     if not paused:
@@ -193,62 +189,38 @@ def level_one_scene():
                 else:
                     if mask_surface.get_rect().collidepoint(mouse_pos):
                         if cx_left is not None and cy_left is not None and cx_right is not None and cy_right is not None:
-                            # Calculate the distance between the mouse cursor and the center of the circular mask
-                            dist_to_center = ((mouse_pos[0] - cx_right) ** 2 + (mouse_pos[1] - cy_left) ** 2) ** 0.5
-
-                            for i, item in enumerate(items):
-                                image_path, _, _ = item
-                                item_rect = globals()[f"{image_path.split('.')[0]}_rect"]
-
-                                if dist_to_center < mask_radius and item_rect.collidepoint(mouse_pos) and items_visible[i]:
+                            for i, (image, rect) in enumerate(zip([globals()[f"{item.split('.')[0]}_image"] for item, _, _ in items], [globals()[f"{item.split('.')[0]}_rect"] for item, _, _ in items])):
+                                if rect.collidepoint(mouse_pos):
                                     items_visible[i] = False
                                     item_found_sound.play()
-
-                                    clicked_item = image_path
                                     praise_display_time = pygame.time.get_ticks()
-                                    if image_path == "hammer.png":
+                                    clicked_item = [item for item, _, _ in items][i]
+                                    if clicked_item == "hammer.png":
                                         hammer_clicked = True
                                         tutorial_image_1_time = pygame.time.get_ticks()
-                                        
-        if not paused:                    
-            if mouse_pos is not None and 0 <= mouse_pos[0] <= 800 and 0 <= mouse_pos[1] <= 600:
-                if 50 <= mouse_pos[0] <= 250 and 50 <= mouse_pos[1] <= 250:
-                    screen.fill((0, 0, 0))
+                                    break
 
-            ret, img = cap.read()
-            img = cv2.flip(img, 1)
+        if mouse_pos and slider_rect.collidepoint(mouse_pos):
+            value = int((mouse_pos[0] - slider_pos[0]) / slider_size[0] * (slider_max_val - slider_min_val) + slider_min_val)
+            threshold = max(min(value, slider_max_val), slider_min_val)
 
-            gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-            rects = detector(gray, 1)
+        if not paused:
+            ret, frame = cap.read()
+            frame = cv2.flip(frame, 1)
 
-            cx_left, cy_left, cx_right, cy_right = None, None, None, None
+            cx_left, cy_left, cx_right, cy_right = detect_eyes(detector, predictor, frame, threshold)
 
-            for rect in rects:
-                shape = predictor(gray, rect)
-                shape = shape_to_np(shape)
-                mask = np.zeros(img.shape[:2], dtype=np.uint8)
-                mask = eye_on_mask(mask, left, shape)
-                mask = eye_on_mask(mask, right, shape)
-                mask = cv2.dilate(mask, np.ones((9, 9), np.uint8), 5)
-                eyes = cv2.bitwise_and(img, img, mask=mask)
-                mask = (eyes == [0, 0, 0]).all(axis=2)
-                eyes[mask] = [255, 255, 255]
-                mid = (shape[42][0] + shape[39][0]) // 2
-                eyes_gray = cv2.cvtColor(eyes, cv2.COLOR_BGR2GRAY)
-                _, thresh = cv2.threshold(eyes_gray, 30, 255, cv2.THRESH_BINARY)
-                thresh = cv2.erode(thresh, None, iterations=2)
-                thresh = cv2.dilate(thresh, None, iterations=4)
-                thresh = cv2.medianBlur(thresh, 3)
-                thresh = cv2.bitwise_not(thresh)
-                cx_left, cy_left = contouring(thresh[:, 0:mid], mid, img)
-                cx_right, cy_right = contouring(thresh[:, mid:], mid, img, True)
+            frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            frame = np.rot90(frame)
+            frame = pygame.surfarray.make_surface(frame)
 
             if cx_left is not None and cy_left is not None and cx_right is not None and cy_right is not None:
-                # Create a circular mask around the eyes with a gradient effect
                 mask_surface.fill((0, 0, 0, 255))
                 mask_radius = 60
                 pygame.draw.circle(mask_surface, (0, 0, 0, 128), (cx_right, cy_left), mask_radius)
                 pygame.draw.circle(mask_surface, (0, 0, 0, 0), (cx_right, cy_left), mask_radius - 10)
+            else: 
+                mask_surface.fill((0, 0, 0, 255))
 
             screen.blit(background_image, background_rect)
 
@@ -270,7 +242,6 @@ def level_one_scene():
             minutes = remaining_time // 60
             seconds = remaining_time % 60
 
-            font = pygame.font.Font(None, 36)
             text_surface = font.render(f"Time: {minutes:02}:{seconds:02}", True, (255, 255, 255))
             screen.blit(text_surface, (10, 10))
 
@@ -320,6 +291,16 @@ def level_one_scene():
                             pygame.mixer.music.stop()
                             start_level_two()
 
+        if cx_left is None or cy_left is None or cx_right is None or cy_right is None:
+            if elapsed_time < 5000:
+                warning_text = font.render("Eyes not detected. Please adjust your camera or eye position.", True, (255, 0, 0))
+                screen.blit(warning_text, (width // 2 - warning_text.get_width() // 2, height // 2))
+
+        slider_rect, handle_rect = draw_slider(screen, slider_pos, slider_size, threshold, slider_min_val, slider_max_val)
+        threshold_text = font.render("Please Adjust Threshold", True, (255, 255, 255))
+        threshold_text2 = font.render("for Suitable Eye Detection", True, (255, 255, 255))
+        screen.blit(threshold_text, (260, 1))
+        screen.blit(threshold_text2, (250, 20))
 
         draw_pause_button(screen, pause_button_rect)
         pygame.display.flip()

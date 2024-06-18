@@ -8,34 +8,21 @@ import time
 import pygame.mixer
 from buttonScene import show_game_over_screen, show_win_screen, show_pause_screen, draw_pause_button
 from LevelSelection import start_level_four
+from eye_detection import detect_eyes
 
-def shape_to_np(shape, dtype="int"):
-    coords = np.zeros((68, 2), dtype=dtype)
-    for i in range(0, 68):
-        coords[i] = (shape.part(i).x, shape.part(i).y)
-    return coords
+def draw_slider(screen, pos, size, value, min_val, max_val):
+    x, y = pos
+    width, height = size
+    slider_rect = pygame.Rect(x, y, width, height)
+    handle_pos = ((value - min_val) / (max_val - min_val)) * width + x
+    handle_rect = pygame.Rect(handle_pos - 5, y - 10, 10, height + 20)
 
-def eye_on_mask(mask, side, shape):
-    points = [shape[i] for i in side]
-    points = np.array(points, dtype=np.int32)
-    mask = cv2.fillConvexPoly(mask, points, 255)
-    return mask
+    pygame.draw.rect(screen, (180, 180, 180), slider_rect)
+    pygame.draw.rect(screen, (50, 50, 50), handle_rect)
+    pygame.draw.line(screen, (0, 0, 0), (x, y + height // 2), (x + width, y + height // 2), 2)
+    pygame.draw.circle(screen, (0, 0, 0), (int(handle_pos), y + height // 2), 10)
 
-def contouring(thresh, mid, img, right=False):
-    cnts, _ = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
-    try:
-        cnt = max(cnts, key=cv2.contourArea)
-        M = cv2.moments(cnt)
-        cx = int(M['m10'] / M['m00'])
-        cy = int(M['m01'] / M['m00'])
-        if right:
-            cx += mid
-        cv2.circle(img, (cx, cy), 4, (0, 0, 255), 2)
-        return cx, cy
-    except:
-        return None, None
-    
-
+    return slider_rect, handle_rect
 
 def level_three_scene():
     # Initialize Pygame
@@ -125,7 +112,7 @@ def level_three_scene():
 
     clock = pygame.time.Clock()
 
-    threshold = 80
+    threshold = 30
 
     dragging_key = False
 
@@ -156,9 +143,13 @@ def level_three_scene():
     tutorial_durations = [5, 5, 3]
     total_tutorial_time = sum(tutorial_durations)
 
-    
+    slider_pos = (10, 40)
+    slider_size = (200, 20)
+    slider_min_val = 0
+    slider_max_val = 255
 
     while True:
+        mouse_pos = None
         screen.fill((0, 0, 0))
         for event in pygame.event.get():
             if event.type == QUIT:
@@ -173,18 +164,6 @@ def level_three_scene():
                         pause_start_time = time.time()
                     else:
                         elapsed_paused_time += time.time() - pause_start_time
-                if key_rect.collidepoint(mouse_pos):
-                    dragging_key = True
-                    offset_x_key = key_rect.x - mouse_pos[0]
-                    offset_y_key = key_rect.y - mouse_pos[1]
-            elif event.type == MOUSEBUTTONUP and event.button == 1:
-                dragging_key = False
-                dragging_keyTwo = False
-            elif event.type == MOUSEMOTION:
-                if dragging_key:
-                    mouse_pos = pygame.mouse.get_pos()
-                    key_rect.x = mouse_pos[0] + offset_x_key
-                    key_rect.y = mouse_pos[1] + offset_y_key
 
         if paused:
             resume_button, quit_button = show_pause_screen(width, height, screen)
@@ -201,37 +180,20 @@ def level_three_scene():
             pygame.display.flip()
             continue
 
-        ret, img = cap.read()
+        if mouse_pos and slider_rect.collidepoint(mouse_pos):
+            value = int((mouse_pos[0] - slider_pos[0]) / slider_size[0] * (slider_max_val - slider_min_val) + slider_min_val)
+            threshold = max(min(value, slider_max_val), slider_min_val)
 
-        # Horizontally flip the webcam feed
-        img = cv2.flip(img, 1)
+        ret, frame = cap.read()
+        frame = cv2.flip(frame, 1)
 
-        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-        rects = detector(gray, 1)
+        cx_left, cy_left, cx_right, cy_right = detect_eyes(detector, predictor, frame, threshold)
 
-        cx_left, cy_left, cx_right, cy_right = None, None, None, None
+        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        frame = np.rot90(frame)
+        frame = pygame.surfarray.make_surface(frame)
 
         eyes_detected = False
-
-        for rect in rects:
-            shape = predictor(gray, rect)
-            shape = shape_to_np(shape)
-            mask = np.zeros(img.shape[:2], dtype=np.uint8)
-            mask = eye_on_mask(mask, left, shape)
-            mask = eye_on_mask(mask, right, shape)
-            mask = cv2.dilate(mask, np.ones((9, 9), np.uint8), 5)
-            eyes = cv2.bitwise_and(img, img, mask=mask)
-            mask = (eyes == [0, 0, 0]).all(axis=2)
-            eyes[mask] = [255, 255, 255]
-            mid = (shape[42][0] + shape[39][0]) // 2
-            eyes_gray = cv2.cvtColor(eyes, cv2.COLOR_BGR2GRAY)
-            _, thresh = cv2.threshold(eyes_gray, 30, 255, cv2.THRESH_BINARY)
-            thresh = cv2.erode(thresh, None, iterations=2)
-            thresh = cv2.dilate(thresh, None, iterations=4)
-            thresh = cv2.medianBlur(thresh, 3)
-            thresh = cv2.bitwise_not(thresh)
-            cx_left, cy_left = contouring(thresh[:, 0:mid], mid, img)
-            cx_right, cy_right = contouring(thresh[:, mid:], mid, img, True)
 
         if cx_left is not None and cy_left is not None and cx_right is not None and cy_right is not None:
             eyes_detected = True
@@ -335,6 +297,11 @@ def level_three_scene():
         else:
             show_good_job = False
 
+        slider_rect, handle_rect = draw_slider(screen, slider_pos, slider_size, threshold, slider_min_val, slider_max_val)
+        
+        threshold_text = font.render("Threshold Slider", True, (255, 255, 255))
+        screen.blit(threshold_text, (10, 10))
+
         draw_pause_button(screen, pause_button_rect)
 
         current_time = time.time()
@@ -420,7 +387,7 @@ def level_three_two_scene(BG_music):
 
     clock = pygame.time.Clock()
 
-    threshold = 80
+    threshold = 30
 
     dragging_key = False
 
@@ -450,9 +417,15 @@ def level_three_two_scene(BG_music):
 
     bg_music_paused = False
 
+    slider_pos = (10, 40)
+    slider_size = (200, 20)
+    slider_min_val = 0
+    slider_max_val = 255
+
     cx_left, cy_left, cx_right, cy_right = None, None, None, None
 
     while True:
+        mouse_pos = None
         screen.fill((0, 0, 0))
         for event in pygame.event.get():
             if event.type == QUIT:
@@ -467,18 +440,6 @@ def level_three_two_scene(BG_music):
                         pause_start_time = time.time()
                     else:
                         elapsed_paused_time += time.time() - pause_start_time
-                if key_rect.collidepoint(mouse_pos):
-                    dragging_key = True
-                    offset_x_key = key_rect.x - mouse_pos[0]
-                    offset_y_key = key_rect.y - mouse_pos[1]
-            elif event.type == MOUSEBUTTONUP and event.button == 1:
-                dragging_key = False
-                dragging_keyTwo = False
-            elif event.type == MOUSEMOTION:
-                if dragging_key:
-                    mouse_pos = pygame.mouse.get_pos()
-                    key_rect.x = mouse_pos[0] + offset_x_key
-                    key_rect.y = mouse_pos[1] + offset_y_key
 
         if paused:
             resume_button, quit_button = show_pause_screen(width, height, screen)
@@ -495,36 +456,21 @@ def level_three_two_scene(BG_music):
             pygame.display.flip()
             continue
 
-        ret, img = cap.read()
+        if mouse_pos and slider_rect.collidepoint(mouse_pos):
+            value = int((mouse_pos[0] - slider_pos[0]) / slider_size[0] * (slider_max_val - slider_min_val) + slider_min_val)
+            threshold = max(min(value, slider_max_val), slider_min_val)
 
-        img = cv2.flip(img, 1)
+        ret, frame = cap.read()
+        frame = cv2.flip(frame, 1)
 
-        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-        rects = detector(gray, 1)
+        cx_left, cy_left, cx_right, cy_right = detect_eyes(detector, predictor, frame, threshold)
 
-        cx_left, cy_left, cx_right, cy_right = None, None, None, None
+        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        frame = np.rot90(frame)
+        frame = pygame.surfarray.make_surface(frame)
 
         eyes_detected = False
 
-        for rect in rects:
-            shape = predictor(gray, rect)
-            shape = shape_to_np(shape)
-            mask = np.zeros(img.shape[:2], dtype=np.uint8)
-            mask = eye_on_mask(mask, left, shape)
-            mask = eye_on_mask(mask, right, shape)
-            mask = cv2.dilate(mask, np.ones((9, 9), np.uint8), 5)
-            eyes = cv2.bitwise_and(img, img, mask=mask)
-            mask = (eyes == [0, 0, 0]).all(axis=2)
-            eyes[mask] = [255, 255, 255]
-            mid = (shape[42][0] + shape[39][0]) // 2
-            eyes_gray = cv2.cvtColor(eyes, cv2.COLOR_BGR2GRAY)
-            _, thresh = cv2.threshold(eyes_gray, 30, 255, cv2.THRESH_BINARY)
-            thresh = cv2.erode(thresh, None, iterations=2)
-            thresh = cv2.dilate(thresh, None, iterations=4)
-            thresh = cv2.medianBlur(thresh, 3)
-            thresh = cv2.bitwise_not(thresh)
-            cx_left, cy_left = contouring(thresh[:, 0:mid], mid, img)
-            cx_right, cy_right = contouring(thresh[:, mid:], mid, img, True)
 
         if cx_left is not None and cy_left is not None and cx_right is not None and cy_right is not None:
             eyes_detected = True
@@ -627,6 +573,11 @@ def level_three_two_scene(BG_music):
         else:
             show_good_job = False
 
+        slider_rect, handle_rect = draw_slider(screen, slider_pos, slider_size, threshold, slider_min_val, slider_max_val)
+        
+        threshold_text = font.render("Threshold Slider", True, (255, 255, 255))
+        screen.blit(threshold_text, (10, 10))
+
         draw_pause_button(screen, pause_button_rect)
 
         pygame.display.flip()
@@ -705,7 +656,7 @@ def level_three_three_scene(BG_music):
 
     clock = pygame.time.Clock()
 
-    threshold = 80
+    threshold = 30
 
     dragging_key = False
     dragging_keyTwo = False
@@ -733,7 +684,13 @@ def level_three_three_scene(BG_music):
     good_job_start_time = 0
     good_job_display_duration = 2
 
+    slider_pos = (10, 40)
+    slider_size = (200, 20)
+    slider_min_val = 0
+    slider_max_val = 255
+
     while True:
+        mouse_pos = None
         screen.fill((0, 0, 0))
         for event in pygame.event.get():
             if event.type == QUIT:
@@ -748,18 +705,6 @@ def level_three_three_scene(BG_music):
                         pause_start_time = time.time()
                     else:
                         elapsed_paused_time += time.time() - pause_start_time
-                if key_rect.collidepoint(mouse_pos):
-                    dragging_key = True
-                    offset_x_key = key_rect.x - mouse_pos[0]
-                    offset_y_key = key_rect.y - mouse_pos[1]
-            elif event.type == MOUSEBUTTONUP and event.button == 1:
-                dragging_key = False
-                dragging_keyTwo = False
-            elif event.type == MOUSEMOTION:
-                if dragging_key:
-                    mouse_pos = pygame.mouse.get_pos()
-                    key_rect.x = mouse_pos[0] + offset_x_key
-                    key_rect.y = mouse_pos[1] + offset_y_key
 
         if paused:
             resume_button, quit_button = show_pause_screen(width, height, screen)
@@ -776,37 +721,20 @@ def level_three_three_scene(BG_music):
             pygame.display.flip()
             continue
 
-        ret, img = cap.read()
+        if mouse_pos and slider_rect.collidepoint(mouse_pos):
+            value = int((mouse_pos[0] - slider_pos[0]) / slider_size[0] * (slider_max_val - slider_min_val) + slider_min_val)
+            threshold = max(min(value, slider_max_val), slider_min_val)
 
-        # Horizontally flip the webcam feed
-        img = cv2.flip(img, 1)
+        ret, frame = cap.read()
+        frame = cv2.flip(frame, 1)
 
-        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-        rects = detector(gray, 1)
+        cx_left, cy_left, cx_right, cy_right = detect_eyes(detector, predictor, frame, threshold)
 
-        cx_left, cy_left, cx_right, cy_right = None, None, None, None
+        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        frame = np.rot90(frame)
+        frame = pygame.surfarray.make_surface(frame)
 
         eyes_detected = False
-
-        for rect in rects:
-            shape = predictor(gray, rect)
-            shape = shape_to_np(shape)
-            mask = np.zeros(img.shape[:2], dtype=np.uint8)
-            mask = eye_on_mask(mask, left, shape)
-            mask = eye_on_mask(mask, right, shape)
-            mask = cv2.dilate(mask, np.ones((9, 9), np.uint8), 5)
-            eyes = cv2.bitwise_and(img, img, mask=mask)
-            mask = (eyes == [0, 0, 0]).all(axis=2)
-            eyes[mask] = [255, 255, 255]
-            mid = (shape[42][0] + shape[39][0]) // 2
-            eyes_gray = cv2.cvtColor(eyes, cv2.COLOR_BGR2GRAY)
-            _, thresh = cv2.threshold(eyes_gray, 30, 255, cv2.THRESH_BINARY)
-            thresh = cv2.erode(thresh, None, iterations=2)
-            thresh = cv2.dilate(thresh, None, iterations=4)
-            thresh = cv2.medianBlur(thresh, 3)
-            thresh = cv2.bitwise_not(thresh)
-            cx_left, cy_left = contouring(thresh[:, 0:mid], mid, img)
-            cx_right, cy_right = contouring(thresh[:, mid:], mid, img, True)
 
         if cx_left is not None and cy_left is not None and cx_right is not None and cy_right is not None:
             eyes_detected = True
@@ -920,6 +848,11 @@ def level_three_three_scene(BG_music):
             screen.blit(characterGJBG_image, characterGJBG_rect)
         else:
             show_good_job = False
+
+        slider_rect, handle_rect = draw_slider(screen, slider_pos, slider_size, threshold, slider_min_val, slider_max_val)
+        
+        threshold_text = font.render("Threshold Slider", True, (255, 255, 255))
+        screen.blit(threshold_text, (10, 10))
 
         draw_pause_button(screen, pause_button_rect)
 
