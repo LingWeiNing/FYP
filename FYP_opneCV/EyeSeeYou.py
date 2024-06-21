@@ -143,7 +143,12 @@ def main_menu():
         pygame.transform.scale(pygame.image.load("assets/Comics/comic1_5.png"), (width, height)),
         pygame.transform.scale(pygame.image.load("assets/Comics/comic1_6.png"), (width, height)),
         pygame.transform.scale(pygame.image.load("assets/Comics/comic1_7.png"), (width, height)),
-        pygame.transform.scale(pygame.image.load("assets/Comics/comic1_8.png"), (width, height))
+        pygame.transform.scale(pygame.image.load("assets/Comics/comic1_8.png"), (width, height)),
+        pygame.transform.scale(pygame.image.load("assets/Comics/comic1_9.png"), (width, height)),
+        pygame.transform.scale(pygame.image.load("assets/Comics/comic1_10.png"), (width, height)),
+        pygame.transform.scale(pygame.image.load("assets/Comics/comic1_11.png"), (width, height)),
+        pygame.transform.scale(pygame.image.load("assets/Comics/comic1_12.png"), (width, height)),
+        pygame.transform.scale(pygame.image.load("assets/Comics/comic1_13.png"), (width, height))
     ]
 
     BG_music = pygame.mixer.Sound("assets/Music/MX-Adventure.mp3")
