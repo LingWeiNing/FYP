@@ -352,13 +352,13 @@ def level_three_two_scene(BG_music):
     key_image = pygame.image.load("assets/Items/key.png")
     key_image = pygame.transform.scale(key_image, (int(key_image.get_width()), int(key_image.get_height())))
     key_rect = key_image.get_rect()
-    key_position = (150, 290) 
+    key_position = (160, 360) 
     key_rect.center = key_position
     key_rect = key_image.get_rect(center=key_position)
 
     portalone_image = pygame.image.load("assets/Portal/portalOne/portalOne.png").convert_alpha()
     portalone_image = pygame.transform.scale(portalone_image, (int(portalone_image.get_width()/5), int(portalone_image.get_height()/5)))
-    portalone_rect = portalone_image.get_rect(center=(width // 2 + 215, height // 2 - 30)) #185, 140
+    portalone_rect = portalone_image.get_rect(center=(575, 200)) #185, 140
 
     fading_portalone = False
     portal_fade_speed = 15
