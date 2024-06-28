@@ -33,9 +33,9 @@ class Mosquito(pygame.sprite.Sprite):
         self.taunt_image = None
         self.taunt_start_time = 0
         self.taunt_duration = 3000
-        self.next_taunt_time = pygame.time.get_ticks() + random.randint(5000, 8000) 
+        self.next_taunt_time = pygame.time.get_ticks() + random.randint(1000, 3000)  # Shorter interval
 
-        self.cooldown_duration = 8000 
+        self.cooldown_duration = 3000  # Shorter cooldown
         self.last_taunt_time = 0
 
     def update(self):
@@ -78,7 +78,7 @@ class Mosquito(pygame.sprite.Sprite):
             self.show_taunt = False
             Mosquito.taunting_mosquito = None
             self.last_taunt_time = current_time
-            self.next_taunt_time = current_time + random.randint(5000, 8000)
+            self.next_taunt_time = current_time + random.randint(1000, 3000)  # Shorter interval
             print(f"Taunt ended. Next taunt time: {self.next_taunt_time}")
 
         if not self.show_taunt and current_time >= self.next_taunt_time:
@@ -93,13 +93,23 @@ class Mosquito(pygame.sprite.Sprite):
         if self.show_taunt and self.taunt_image:
             taunt_rect = self.taunt_image.get_rect(center=(self.rect.centerx + 40, self.rect.top - 20))  # Adjust the Y position to be above the mosquito
             screen.blit(self.taunt_image, taunt_rect)
+    
+    def restart_taunt(self):
+        if not self.show_taunt:
+            current_time = pygame.time.get_ticks()
+            if current_time - self.last_taunt_time >= self.cooldown_duration and Mosquito.taunting_mosquito is None:
+                self.show_taunt = True
+                self.taunt_image = random.choice(self.taunt_images)
+                self.taunt_start_time = current_time
+                Mosquito.taunting_mosquito = self
+                print(f"Taunt restarted. Taunt duration: {self.taunt_duration}")
 
 def spawn_mosquitoes(num_mosquitoes, images, taunt_images, scale_factor):
     mosquitoes = pygame.sprite.Group()
     for _ in range(num_mosquitoes):
         x = random.randint(0, 800)
         y = random.randint(0, 600)
-        speed = random.uniform(1, 3)
+        speed = random.uniform(3, 7)
         mosquito = Mosquito(images, taunt_images, x, y, speed, scale_factor)
         mosquitoes.add(mosquito)
     return mosquitoes
@@ -162,7 +172,7 @@ def level_two_scene():
         "assets/Dialogue/mosquitoTaunt4.png"
     ]
 
-    mosquitoes = spawn_mosquitoes(5, mosquito_images, mosquitoTaunt_images, (100, 100))
+    mosquitoes = spawn_mosquitoes(7, mosquito_images, mosquitoTaunt_images, (100, 100))
 
     mosquito_counter = 0
 
