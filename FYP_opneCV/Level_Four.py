@@ -51,12 +51,14 @@ def level_four_scene():
     pygame.display.set_caption("FYP Game")
 
     puzzle_image = pygame.image.load("assets/Bg/museum.jpg")
-    rows, cols = 3, 4 #3,4
+    puzzle_image = pygame.transform.scale(puzzle_image, (450, 350))
+    rows, cols = 3, 3 
     pieces, piece_width, piece_height = cut_image(puzzle_image, rows, cols)
 
     puzzleclipped_sound = pygame.mixer.Sound("assets/SoundEffect/Bling.mp3")
     BG_music = pygame.mixer.Sound("assets/Music/OperationDO.mp3")
     BG_music.play()
+    BG_music.play(-1)
 
     praising_image = pygame.image.load("assets/goodjob/GoodJobBunny.png")
     praising_rect = praising_image.get_rect(center=(600, 500))
@@ -112,8 +114,8 @@ def level_four_scene():
             show_praising_image = True
             praising_image_display_time = pygame.time.get_ticks()
 
-    x_offset = 80 
-    y_offset = 80 
+    x_offset = 190 
+    y_offset = 130 
 
     pause_button_rect = pygame.Rect(width - 100, 10, 80, 40)
     paused = False
@@ -269,7 +271,7 @@ def level_four_scene():
 
             pygame.display.flip()
 
-            clock.tick(60)
+            clock.tick(30)
 
     cap.release()
     pygame.quit()

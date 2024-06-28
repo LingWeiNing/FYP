@@ -30,6 +30,7 @@ def level_three_scene():
     pygame.mixer.init()
     BG_music = pygame.mixer.Sound("assets/Music/207.mp3")
     BG_music.play()
+    BG_music.play(-1)
 
     item_found_sound = pygame.mixer.Sound("assets/SoundEffect/Bling.mp3")
     lose_life_sound = pygame.mixer.Sound("assets/SoundEffect/lose_life.mp3")
@@ -314,7 +315,7 @@ def level_three_scene():
 
         pygame.display.flip()
 
-        clock.tick(60)
+        clock.tick(30)
 
 def level_three_two_scene(BG_music):
     # Initialize Pygame
@@ -582,7 +583,7 @@ def level_three_two_scene(BG_music):
 
         pygame.display.flip()
 
-        clock.tick(60)
+        clock.tick(30)
 
 def level_three_three_scene(BG_music):
     # Initialize Pygame
@@ -858,7 +859,7 @@ def level_three_three_scene(BG_music):
 
         pygame.display.flip()
 
-        clock.tick(60)
+        clock.tick(30)
 
 if __name__ == "__main__":
     level_three_scene()

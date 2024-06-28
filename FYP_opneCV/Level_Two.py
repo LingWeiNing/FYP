@@ -191,6 +191,7 @@ def level_two_scene():
     slider_max_val = 255
 
     BG_music.play()
+    BG_music.play(-1)
 
     cx_left, cy_left, cx_right, cy_right = None, None, None, None
 
@@ -350,7 +351,7 @@ def level_two_scene():
 
         pygame.display.flip()
 
-        clock.tick(60)
+        clock.tick(30)
 
 if __name__ == "__main__":
     level_two_scene()

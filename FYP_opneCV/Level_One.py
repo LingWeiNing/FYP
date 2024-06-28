@@ -144,6 +144,7 @@ def level_one_scene():
 
     elapsed_paused_time = 0 
     BG_music.play()
+    BG_music.play(-1)
 
     cx_left, cy_left, cx_right, cy_right = None, None, None, None
 
@@ -304,7 +305,7 @@ def level_one_scene():
 
         draw_pause_button(screen, pause_button_rect)
         pygame.display.flip()
-        clock.tick(60)
+        clock.tick(30)
 
 if __name__ == "__main__":
     level_one_scene()

@@ -153,6 +153,7 @@ def main_menu():
 
     BG_music = pygame.mixer.Sound("assets/Music/MX-Adventure.mp3")
     BG_music.play()
+    BG_music.play(-1)
     
     current_page = 0
     showing_story = False
