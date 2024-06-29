@@ -113,13 +113,13 @@ def level_three_scene():
 
     clock = pygame.time.Clock()
 
-    threshold = 30
+    threshold = 200
 
     dragging_key = False
 
     offset_x_key, offset_y_key = 0, 0
 
-    lives = 1
+    lives = 2
     font = pygame.font.Font(None, 36)
 
     cooldown_time = 3 
@@ -180,6 +180,8 @@ def level_three_scene():
                         sys.exit()
             pygame.display.flip()
             continue
+
+        slider_rect, handle_rect = draw_slider(screen, slider_pos, slider_size, threshold, slider_min_val, slider_max_val)
 
         if mouse_pos and slider_rect.collidepoint(mouse_pos):
             value = int((mouse_pos[0] - slider_pos[0]) / slider_size[0] * (slider_max_val - slider_min_val) + slider_min_val)
@@ -315,7 +317,7 @@ def level_three_scene():
 
         pygame.display.flip()
 
-        clock.tick(30)
+        clock.tick(60)
 
 def level_three_two_scene(BG_music):
     # Initialize Pygame
@@ -388,13 +390,13 @@ def level_three_two_scene(BG_music):
 
     clock = pygame.time.Clock()
 
-    threshold = 30
+    threshold = 200
 
     dragging_key = False
 
     offset_x_key, offset_y_key = 0, 0
 
-    lives = 2
+    lives = 5
     font = pygame.font.Font(None, 36)
 
     cooldown_time = 3 
@@ -456,6 +458,8 @@ def level_three_two_scene(BG_music):
                         sys.exit()
             pygame.display.flip()
             continue
+
+        slider_rect, handle_rect = draw_slider(screen, slider_pos, slider_size, threshold, slider_min_val, slider_max_val)
 
         if mouse_pos and slider_rect.collidepoint(mouse_pos):
             value = int((mouse_pos[0] - slider_pos[0]) / slider_size[0] * (slider_max_val - slider_min_val) + slider_min_val)
@@ -583,7 +587,7 @@ def level_three_two_scene(BG_music):
 
         pygame.display.flip()
 
-        clock.tick(30)
+        clock.tick(60)
 
 def level_three_three_scene(BG_music):
     # Initialize Pygame
@@ -657,14 +661,14 @@ def level_three_three_scene(BG_music):
 
     clock = pygame.time.Clock()
 
-    threshold = 30
+    threshold = 200
 
     dragging_key = False
     dragging_keyTwo = False
 
     offset_x_key, offset_y_key = 0, 0
 
-    lives = 2
+    lives = 5
     font = pygame.font.Font(None, 36)
 
     cooldown_time = 3 
@@ -721,6 +725,8 @@ def level_three_three_scene(BG_music):
                         sys.exit()
             pygame.display.flip()
             continue
+
+        slider_rect, handle_rect = draw_slider(screen, slider_pos, slider_size, threshold, slider_min_val, slider_max_val)
 
         if mouse_pos and slider_rect.collidepoint(mouse_pos):
             value = int((mouse_pos[0] - slider_pos[0]) / slider_size[0] * (slider_max_val - slider_min_val) + slider_min_val)
@@ -859,7 +865,7 @@ def level_three_three_scene(BG_music):
 
         pygame.display.flip()
 
-        clock.tick(30)
+        clock.tick(60)
 
 if __name__ == "__main__":
     level_three_scene()

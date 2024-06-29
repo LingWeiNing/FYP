@@ -71,8 +71,8 @@ def level_one_scene():
     itemBox_rect.topleft = (0, 470)
 
     items = [
-        ("globe.png", (550, 400), 0.8),
-        ("dumbells.png", (500, 320), 0.5),
+        ("globe.png", (520, 380), 0.8),
+        ("dumbells.png", (470, 320), 0.5),
         ("laptop.png", (150, 270), 1.0),
         ("socks.png", (220, 120), 0.1),
         ("mosquitoTrap.png", (560, 230), 0.10),
@@ -125,12 +125,12 @@ def level_one_scene():
 
     clock = pygame.time.Clock()
 
-    threshold = 30
+    threshold = 200
 
     mask_surface = pygame.Surface((width, height), pygame.SRCALPHA)
 
     start_time = pygame.time.get_ticks()
-    countdown_duration = 120
+    countdown_duration = 600
 
     praise_display_time = -5000
 
@@ -158,7 +158,7 @@ def level_one_scene():
     while True:
         mouse_pos = None
         mouse_click = False
-        
+
         for event in pygame.event.get():
             if event.type == QUIT:
                 cap.release()
@@ -200,6 +200,9 @@ def level_one_scene():
                                         hammer_clicked = True
                                         tutorial_image_1_time = pygame.time.get_ticks()
                                     break
+
+        # Ensure the slider is drawn before checking for interaction
+        slider_rect, handle_rect = draw_slider(screen, slider_pos, slider_size, threshold, slider_min_val, slider_max_val)
 
         if mouse_pos and slider_rect.collidepoint(mouse_pos):
             value = int((mouse_pos[0] - slider_pos[0]) / slider_size[0] * (slider_max_val - slider_min_val) + slider_min_val)
@@ -305,7 +308,8 @@ def level_one_scene():
 
         draw_pause_button(screen, pause_button_rect)
         pygame.display.flip()
-        clock.tick(30)
+        clock.tick(60)
+
 
 if __name__ == "__main__":
     level_one_scene()

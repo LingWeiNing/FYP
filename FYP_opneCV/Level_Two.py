@@ -182,12 +182,12 @@ def level_two_scene():
     show_praising_image = False
     praising_image_display_time = 0
 
-    threshold = 30
+    threshold = 200
 
     mask_surface = pygame.Surface((width, height), pygame.SRCALPHA)
 
     start_time = pygame.time.get_ticks()
-    countdown_duration = 120
+    countdown_duration = 600
 
     pause_button_rect = pygame.Rect(width - 100, 10, 80, 40)
     paused = False
@@ -254,6 +254,8 @@ def level_two_scene():
                             cap.release()
                             pygame.quit()
                             sys.exit()
+                            
+        slider_rect, handle_rect = draw_slider(screen, slider_pos, slider_size, threshold, slider_min_val, slider_max_val)
 
         if mouse_pos and slider_rect.collidepoint(mouse_pos):
             value = int((mouse_pos[0] - slider_pos[0]) / slider_size[0] * (slider_max_val - slider_min_val) + slider_min_val)
@@ -361,7 +363,7 @@ def level_two_scene():
 
         pygame.display.flip()
 
-        clock.tick(30)
+        clock.tick(60)
 
 if __name__ == "__main__":
     level_two_scene()

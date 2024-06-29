@@ -42,6 +42,17 @@ def shuffle_pieces(pieces, rows, cols):
     random.shuffle(positions)
     return positions
 
+def draw_grid(screen, rows, cols, piece_width, piece_height, x_offset, y_offset):
+    for row in range(rows + 1):
+        start_pos = (x_offset, y_offset + row * piece_height)
+        end_pos = (x_offset + cols * piece_width, y_offset + row * piece_height)
+        pygame.draw.line(screen, (255, 0, 0), start_pos, end_pos, 2)
+
+    for col in range(cols + 1):
+        start_pos = (x_offset + col * piece_width, y_offset)
+        end_pos = (x_offset + col * piece_width, y_offset + rows * piece_height)
+        pygame.draw.line(screen, (255, 0, 0), start_pos, end_pos, 2)
+
 def level_four_scene():
     pygame.init()
     pygame.mixer.init()
@@ -94,12 +105,12 @@ def level_four_scene():
     img = cv2.flip(img, 1)
 
     start_time = pygame.time.get_ticks()
-    countdown_time = 200
+    countdown_time = 600
 
     show_praising_image = False
     praising_image_display_time = 0
 
-    threshold = 30
+    threshold = 200
 
     font_timer = pygame.font.Font(None, 36)
 
@@ -176,6 +187,8 @@ def level_four_scene():
                                 pygame.quit()
                                 sys.exit()
 
+        slider_rect, handle_rect = draw_slider(screen, slider_pos, slider_size, threshold, slider_min_val, slider_max_val)
+
         if mouse_pos and slider_rect.collidepoint(mouse_pos):
             value = int((mouse_pos[0] - slider_pos[0]) / slider_size[0] * (slider_max_val - slider_min_val) + slider_min_val)
             threshold = max(min(value, slider_max_val), slider_min_val)
@@ -186,6 +199,10 @@ def level_four_scene():
             remaining_time = max(countdown_time - int(elapsed_time / 1000), 0)
 
             screen.fill((0, 0, 0))
+
+            # Draw the red grid
+            draw_grid(screen, rows, cols, piece_width, piece_height, x_offset, y_offset)
+
             for i, (x, y) in enumerate(piece_positions):
                 screen.blit(pieces[i], (x + x_offset, y + y_offset))
 
@@ -271,10 +288,11 @@ def level_four_scene():
 
             pygame.display.flip()
 
-            clock.tick(30)
+            clock.tick(60)
 
     cap.release()
     pygame.quit()
 
 if __name__ == "__main__":
     level_four_scene()
+
