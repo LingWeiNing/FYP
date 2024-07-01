@@ -176,7 +176,8 @@ def level_three_scene():
                         elapsed_paused_time += time.time() - pause_start_time
                     elif quit_button.collidepoint(mouse_pos):
                         cap.release()
-                        pygame.quit()
+                        BG_music.stop() 
+                        level_three_scene()
                         sys.exit()
             pygame.display.flip()
             continue
@@ -454,7 +455,7 @@ def level_three_two_scene(BG_music):
                         elapsed_paused_time += time.time() - pause_start_time
                     elif quit_button.collidepoint(mouse_pos):
                         cap.release()
-                        pygame.quit()
+                        level_three_two_scene(BG_music)
                         sys.exit()
             pygame.display.flip()
             continue
@@ -721,7 +722,7 @@ def level_three_three_scene(BG_music):
                         elapsed_paused_time += time.time() - pause_start_time
                     elif quit_button.collidepoint(mouse_pos):
                         cap.release()
-                        pygame.quit()
+                        level_three_three_scene(BG_music)
                         sys.exit()
             pygame.display.flip()
             continue

@@ -70,7 +70,7 @@ def show_pause_screen(width, height, screen):
     quit_button = pygame.Rect(width // 2 - 100, height // 2 + 70, 200, 50)
     pygame.draw.rect(screen, (255, 255, 255), quit_button)
     font_quit = pygame.font.Font(None, 36)
-    text_quit = font_quit.render("Quit Level", True, (0, 0, 0))
+    text_quit = font_quit.render("Restart Level", True, (0, 0, 0))
     screen.blit(text_quit, (width // 2 - text_quit.get_width() // 2, height // 2 + 80))
 
     pygame.display.flip()

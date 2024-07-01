@@ -184,7 +184,8 @@ def level_four_scene():
                                 elapsed_paused_time += pygame.time.get_ticks() - pause_start_time
                             elif quit_button.collidepoint(event.pos):
                                 cap.release()
-                                pygame.quit()
+                                level_four_scene()
+                                BG_music.stop() 
                                 sys.exit()
 
         slider_rect, handle_rect = draw_slider(screen, slider_pos, slider_size, threshold, slider_min_val, slider_max_val)

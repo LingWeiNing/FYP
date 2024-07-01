@@ -112,11 +112,9 @@ def level_one_scene():
         silhouette_rect = item_silhouettes[i].get_rect(center=(itemBox_rect.left + 100 + i * 100, itemBox_rect.top + 50))
         item_silhouettes_rects.append(silhouette_rect)
 
-    items_visible = [True] * len(items)
-
     explanation_images = {path: pygame.image.load(explanation_image_paths[path]) for path in explanation_image_paths}
     explanation_images = {path: pygame.transform.scale(explanation_images[path], (int(explanation_images[path].get_width()), int(explanation_images[path].get_height()))) for path in explanation_images}
-    explanation_image_rects = {path: explanation_images[path].get_rect(center=(width // 2 + 210, height // 2 + 35)) for path in explanation_images}
+    explanation_image_rects = {path: explanation_images[path].get_rect(center=(width // 2 + 250, height // 2 + 77)) for path in explanation_images}
 
     detector = dlib.get_frontal_face_detector()
     predictor = dlib.shape_predictor('shape_predictor/shape_predictor_68_face_landmarks.dat')
@@ -185,20 +183,25 @@ def level_one_scene():
                                         elapsed_paused_time += pygame.time.get_ticks() - pause_start_time
                                     elif quit_button.collidepoint(event.pos):
                                         cap.release()
-                                        pygame.quit()
+                                        BG_music.stop() 
+                                        level_one_scene()
                                         sys.exit()
                 else:
                     if mask_surface.get_rect().collidepoint(mouse_pos):
                         if cx_left is not None and cy_left is not None and cx_right is not None and cy_right is not None:
                             for i, (image, rect) in enumerate(zip([globals()[f"{item.split('.')[0]}_image"] for item, _, _ in items], [globals()[f"{item.split('.')[0]}_rect"] for item, _, _ in items])):
                                 if rect.collidepoint(mouse_pos):
-                                    items_visible[i] = False
+                                    clicked_item = [item for item, _, _ in items][i]
+                                    del items[i]
+                                    del item_silhouettes[i]
+                                    del item_silhouettes_rects[i]
                                     item_found_sound.play()
                                     praise_display_time = pygame.time.get_ticks()
-                                    clicked_item = [item for item, _, _ in items][i]
+                                    
                                     if clicked_item == "hammer.png":
                                         hammer_clicked = True
                                         tutorial_image_1_time = pygame.time.get_ticks()
+                                    
                                     break
 
         # Ensure the slider is drawn before checking for interaction
@@ -228,16 +231,14 @@ def level_one_scene():
 
             screen.blit(background_image, background_rect)
 
-            for i, (visible, image, rect) in enumerate(zip(items_visible, [globals()[f"{item.split('.')[0]}_image"] for item, _, _ in items], [globals()[f"{item.split('.')[0]}_rect"] for item, _, _ in items])):
-                if visible:
-                    screen.blit(image, rect)
+            for image, rect in zip([globals()[f"{item.split('.')[0]}_image"] for item, _, _ in items], [globals()[f"{item.split('.')[0]}_rect"] for item, _, _ in items]):
+                screen.blit(image, rect)
 
             screen.blit(mask_surface, (0, 0))
             screen.blit(itemBox_image, itemBox_rect)
 
-            for i, (silhouette, rect) in enumerate(zip(item_silhouettes, item_silhouettes_rects)):
-                if items_visible[i]:
-                    screen.blit(silhouette, rect)
+            for silhouette, rect in zip(item_silhouettes, item_silhouettes_rects):
+                screen.blit(silhouette, rect)
 
             current_time = pygame.time.get_ticks()
             elapsed_time = current_time - start_time - elapsed_paused_time
@@ -278,8 +279,8 @@ def level_one_scene():
                             pygame.mixer.music.stop()
                             level_one_scene()
 
-            if all(not visible for visible in items_visible):
-                next_button= show_win_screen(width, height, screen)
+            if not items: 
+                next_button = show_win_screen(width, height, screen)
                 BG_music.stop()
                 while True:
                     event = pygame.event.wait()
@@ -290,7 +291,7 @@ def level_one_scene():
                     elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                         mouse_pos = pygame.mouse.get_pos()
                         if next_button.collidepoint(mouse_pos):
-                            BG_music.stop() 
+                            BG_music.stop()
                             BG_music = None
                             pygame.mixer.music.stop()
                             start_level_two()
@@ -301,9 +302,9 @@ def level_one_scene():
                 screen.blit(warning_text, (width // 2 - warning_text.get_width() // 2, height // 2))
 
         slider_rect, handle_rect = draw_slider(screen, slider_pos, slider_size, threshold, slider_min_val, slider_max_val)
-        threshold_text = font.render("Please Adjust Threshold", True, (255, 255, 255))
-        threshold_text2 = font.render("for Suitable Eye Detection", True, (255, 255, 255))
-        screen.blit(threshold_text, (260, 1))
+        threshold_text = font.render("Threshold Slider", True, (255, 255, 255))
+        threshold_text2 = font.render("for Adjusting Eye Detection", True, (255, 255, 255))
+        screen.blit(threshold_text, (width//2 - 105, 1))
         screen.blit(threshold_text2, (250, 20))
 
         draw_pause_button(screen, pause_button_rect)
